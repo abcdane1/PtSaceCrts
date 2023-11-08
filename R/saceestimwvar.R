@@ -24,7 +24,8 @@
 #' @param ics A `logical` argument for whether estimator should account for cluster size. Default is `F`.
 #' @param boot A `logical` argument for variance estimation. If `boot=F`, variance is estimated
 #' using the asymptotic variance of estimator. If `boot=T`, variance of estimator is
-#' computed using nonparametric boostrap. Default is `F`.
+#' computed using nonparametric bootstrap. Note, if `boot=T`, messages indicating near 0 estimated variance
+#' of random intercept are suppressed. Default is `F`.
 #' @param nagq A `double` for number of quadrature points used in the AGQ approximation of integrals
 #' involved in computing estimate of asymptotic variance. Default is `nagq=10`. It is not recommended
 #' to use in excess of 20 quadrature points. If `boot=T`, this argument is unused.
@@ -218,7 +219,8 @@ aghqvect<-function(f,am=0,bm=0,h=10^(-5)){
     #variance of random intercept
     sigma2<-(as.data.frame(lme4::VarCorr(glmmfit))$sdcor[1])^2
     #adding other treatment to df
-    dfnew<-cbind(df[,-1],A=1-df$A,Aold=df$A)
+    lasti<-ncol(df)
+    dfnew<-cbind(df[,-lasti],A=1-df$A,Aold=df$A)
     #estimated predicted probability under other treatment
     valst<-predict(glmmfit,newdata=dfnew,type="response")
     dfnewv<-cbind(dfnew,pred=valst)
@@ -260,7 +262,7 @@ aghqvect<-function(f,am=0,bm=0,h=10^(-5)){
   df<-results[[1]]
   nc<-results[[2]]
   valst<-results[[3]]
-  vaslo<-results[[4]]
+  valso<-results[[4]]
   betahat<-results[[5]]
   sigma2<-results[[6]]
 
