@@ -4,19 +4,19 @@
 #' trials based on estimators derived from two sets of identification assumptions
 #' as described in (cite paper). All principal score based models are fit using GLMM for binary data.
 #' The function also provides estimates of the variance for these estimators. User has the option
-#' to choose how variance is estimated and corresponding confidence intervals
+#' to choose how the variances are estimated and corresponding confidence intervals
 #' are computed. By default, the function provides the variance of the asymptotic distribution of
 #' these estimators (cite wy), which relies on numeric approximation of integrals via Adaptive Gauss-Hermite
 #' Quadrature (AGQ) (cite). The user may also select to estimate variance using non-parametric
 #' cluster bootstrap option (cite welsh).
 #'
-#' @param df Data frame containing all data required for estimation with names listed below.
+#' @param df Data frame containing all data required for estimation with user-specified names below.
 #' @param trt A named `character` specifying treatment variable. Default is "A".
 #' @param surv A named `character` specifying survival status. Default is "S".
 #' @param out A named `character` specifying non-mortal outcome. Default is "Y".
 #' @param clustid A named `character` specifying non-mortal cluster membership. Default is "Id".
 #' @param csize A named `character` specifying cluster size. Default is "Csize". This need not be specified if `ics=F`.
-#' @param clustv A named `character` vector for cluster-level variables. Default is "C"
+#' @param clustv A named `character` vector for cluster-level variables. Default is "C".
 #' @param indv A named `character` vector for individual-level varibles. Default is "X".
 #' @param set1 A `logical` argument for whether identified estimator uses Set 1 Assumptions. Default is `T`.
 #' @param set2 A `logical` argument for whether identified estimator uses Set 2 Assumptions. Default is `F`.
@@ -26,13 +26,19 @@
 #' using the asymptotic variance of estimator. If `boot=T`, variance of estimator is
 #' computed using nonparametric bootstrap. Note, if `boot=T`, messages indicating near 0 estimated variance
 #' of random intercept are suppressed. Default is `F`.
+#' @param logform A `logical` argument which applies the base e logarithm to some or all functions of numerically approximated integrals.
+#' Default is `T`. If all cluster sizes are smaller than 50, to save computation time, `logform` generally can be set to `F`. This argument is ignored when `boot=T`.
+#' @param partial A `logical` argument which selects the functions of the integrals to take the logarithm of when `boot=F`. The functions chosen
+#' are ones of integrals intractably close to 0, requiring working with the log-scale. Default is `F` but is ignored if `logform` is set to `F`.
+#' If `partial` is set to `T`, all functions of numerical integrals are first computed at the log-scale.
+#' This may be required for larger cluster sizes. This argument is ignored when `boot=T`.
 #' @param nagq A `double` for number of quadrature points used in the AGQ approximation of integrals
 #' involved in computing estimate of asymptotic variance. Default is `nagq=10`. It is not recommended
-#' to use in excess of 20 quadrature points. If `boot=T`, this argument is unused.
-#' @param iters A `double` for number of bootstrap samples to be taken. Default is `iters=200`.
+#' to use in excess of 20 quadrature points. This argument is ignored when `boot=T`.
+#' @param iters A `double` for number of bootstrap samples to be taken when `boot=T`. Default is `iters=200`. This argument is ignored when `boot=F`.
 #'
 #' @return A named `double` including point estimates, estimates of variance, and confidence intervals.
-#' To add: names, CIs.
+#' To add: CI with names
 #'
 #' @importFrom dplyr select
 #' @importFrom fastGHQuad gaussHermiteData
@@ -41,9 +47,9 @@
 #'
 #' @references
 #' \enumerate{
-#'    \item{add.}
-#'    \item{add.}
-#'    \item{add.}
+#'    \item{To add.}
+#'    \item{To add.}
+#'    \item{To add.}
 #' }
 #'
 #'
@@ -51,7 +57,8 @@
 
 
 #wrapper function to compute estimates for parameters and variance estimates of these estimators
-sacecluster<-function(df,trt="A",surv="S",out="Y",clustid="Id",csize="Csize",clustv="C",indv="X",set1=T,set2=F,ics=F,boot=F,nagq=10,iters=200){
+sacecluster<-function(df,trt="A",surv="S",out="Y",clustid="Id",csize="Csize",clustv="C",indv="X",set1=T,set2=F,ics=F,boot=F,logform=T,
+                      partial=T,nagq=10,iters=200){
 #functions required for analytic method numerical integration
 if(boot==F){
 f1<-function(x){
@@ -321,15 +328,33 @@ aghqvect<-function(f,am=0,bm=0,h=10^(-5)){
       p1hat<-valso[clust1]
       nvar<-ncol(dfcov)
 
-      #entries of meat matrix common to both estimators
-      phi1<-apply(dfcov*dfint$S,2,sum)-aghqvect(f4,am=nvar)/aghqvect(f1)
-      phi2<--nc/(2*sigma2)+1/(2*sigma2^2)*aghqvect(f2)/aghqvect(f1)
+      if(logform==F){
+        #entries of meat matrix common to both estimators
+        phi1<-apply(dfcov*dfint$S,2,sum)-aghqvect(f4,am=nvar)/aghqvect(f1)
+        phi2<--nc/(2*sigma2)+1/(2*sigma2^2)*aghqvect(f2)/aghqvect(f1)
+        #entries of outer matrix common to both estimators before inversion
+        A11<--(aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar))/aghqvect(f1)+aghqvect(f4,am=nvar)%*%t(aghqvect(f4,am=nvar))/(aghqvect(f1))^2
+        A12<--1/(2*sigma2^2)*(aghqvect(f5,am=nvar)/aghqvect(f1)-aghqvect(f4,am=nvar)/(aghqvect(f1))^2*aghqvect(f2))
+        A22<-nc/(2*sigma2^2)-1/(sigma2^3)*aghqvect(f2)/aghqvect(f1)+1/(4*sigma2^4)*(aghqvect(f3)/aghqvect(f1)-(aghqvect(f2))^2/(aghqvect(f1))^2)}
 
+      #applies a partial log form the above when computation is unfeasible, recommended for cluster sizes >100
+      if(logform==T & partial==T){
+        phi1<-apply(dfcov*dfint$S,2,sum)-aghqvect(f4,am=nvar)/aghqvect(f1)
+        phi2<--nc/(2*sigma2)+1/(2*sigma2^2)*aghqvect(f2)/aghqvect(f1)
+        A11<--(aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar))/aghqvect(f1)+exp(log(aghqvect(f4,am=nvar)%*%t(aghqvect(f4,am=nvar)))-2*log(abs(aghqvect(f1))))
+        A12<--1/(2*sigma2^2)*(aghqvect(f5,am=nvar)/aghqvect(f1)-
+                                exp(log(aghqvect(f4,am=nvar))-2*log(abs(aghqvect(f1)))+sign(aghqvect(f2))*log(abs(aghqvect(f2)))))
 
-      #entries of outer matrix common to both estimators before inversion
-      A11<--(aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar))/aghqvect(f1)+aghqvect(f4,am=nvar)%*%t(aghqvect(f4,am=nvar))/(aghqvect(f1))^2
-      A12<--1/(2*sigma2^2)*(aghqvect(f5,am=nvar)/aghqvect(f1)-aghqvect(f4,am=nvar)/(aghqvect(f1))^2*aghqvect(f2))
-      A22<-nc/(2*sigma2^2)-1/(sigma2^3)*aghqvect(f2)/aghqvect(f1)+1/(4*sigma2^4)*(aghqvect(f3)/aghqvect(f1)-(aghqvect(f2))^2/(aghqvect(f1))^2)
+        A22<-nc/(2*sigma2^2)-1/(sigma2^3)*aghqvect(f2)/aghqvect(f1)+1/(4*sigma2^4)*(aghqvect(f3)/aghqvect(f1)-exp(2*log(abs(aghqvect(f2)))-2*log(abs(aghqvect(f1)))))
+      }
+
+      #full log form of above
+      if(logform==T & partial==F){
+        phi1<-apply(dfcov*dfint$S,2,sum)-ifelse(aghqvect(f4,am=nvar)!=0,exp(sign(aghqvect(f4,am=nvar))*log(abs(aghqvect(f4,am=nvar)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)
+        phi2<--nc/(2*sigma2)+1/(2*sigma2^2)*exp(sign(aghqvect(f2))*log(abs(aghqvect(f2)))-sign(aghqvect(f1))*log(abs(aghqvect(f1))))
+        A11<-ifelse((aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar))!=0,-exp(sign(aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar))*log(abs(aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)+ifelse(aghqvect(f4,am=nvar)%*%t(aghqvect(f4,am=nvar))!=0,exp(log(aghqvect(f4,am=nvar)%*%t(aghqvect(f4,am=nvar)))-2*log(abs(aghqvect(f1)))),0)
+        A12<--1/(2*sigma2^2)*(ifelse(aghqvect(f5,am=nvar)!=0,exp(sign(aghqvect(f5,am=nvar))*log(abs(aghqvect(f5,am=nvar)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)-ifelse(aghqvect(f4,am=nvar)!=0,exp(log(aghqvect(f4,am=nvar))-2*log(abs(aghqvect(f1)))+sign(aghqvect(f2))*log(abs(aghqvect(f2)))),0))
+        A22<-nc/(2*sigma2^2)-1/(sigma2^3)*ifelse(aghqvect(f2)!=0,exp(sign(aghqvect(f2))*log(abs(aghqvect(f2)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)+1/(4*sigma2^4)*(ifelse(aghqvect(f3)!=0,exp(sign(aghqvect(f3))*log(aghqvect(f3))-sign(aghqvect(f1))*log(aghqvect(f1))),0)-ifelse(aghqvect(f2)!=0,exp(2*log(abs(aghqvect(f2)))-2*log(abs(aghqvect(f1)))),0))}
 
       #set1 only entries to matrices
       if(set1==T){
@@ -391,18 +416,21 @@ aghqvect<-function(f,am=0,bm=0,h=10^(-5)){
     #determining which category of output, decided by what type of estimator chosen
     if(set1==T & set2==F){
       Ainh<-solve(Ah)
-      varsest<-t(c(rep(0,ncov+1),1,-1))%*%Ainh%*%phimath%*%t(Ainh)%*%c(rep(0,ncov+1),1,-1)}
+      varsest<-t(c(rep(0,ncov+1),1,-1))%*%Ainh%*%phimath%*%t(Ainh)%*%c(rep(0,ncov+1),1,-1)
+      names<-c("EstimateSet1","VarEstSet1")}
 
     if(set1==F & set2==T){
       Ainj<-solve(Aj)
-      varsest<-t(c(rep(0,ncov+1),1,-1))%*%Ainj%*%phimatj%*%t(Ainj)%*%c(rep(0,ncov+1),1,-1)}
+      varsest<-t(c(rep(0,ncov+1),1,-1))%*%Ainj%*%phimatj%*%t(Ainj)%*%c(rep(0,ncov+1),1,-1)
+      names<-c("EstimateSet2","VarEstSet2")}
 
     if(set1==T & set2==T){
       Ainh<-solve(Ah)
       varsesth<-t(c(rep(0,ncov+1),1,-1))%*%Ainh%*%phimath%*%t(Ainh)%*%c(rep(0,ncov+1),1,-1)
       Ainj<-solve(Aj)
       varsestj<-t(c(rep(0,ncov+1),1,-1))%*%Ainj%*%phimatj%*%t(Ainj)%*%c(rep(0,ncov+1),1,-1)
-      varsest<-c(varsesth,varsestj)}
+      varsest<-c(varsesth,varsestj)
+      names<-c("EstimateSet1","EstimateSet2","VarEstSet1","VarEstSet2")}
   }
 
  #non parametric bootstrap
@@ -425,9 +453,20 @@ aghqvect<-function(f,am=0,bm=0,h=10^(-5)){
       #generate bootstrap estimates
       bootsample[i,]<-unlist(resultsb[-c(1:7)])
     }
+    if(set1==T & set2==F){
+      names<-c("EstimateSet1","VarEstSet1")}
+
+    if(set1==F & set2==T){
+      names<-c("EstimateSet2","VarEstSet2")}
+
+    if(set1==T & set2==T){
+      names<-c("EstimateSet1","EstimateSet2","VarEstSet1","VarEstSet2")}
+
   #find variance of non-parametric bootstrap distribution
   varsest<-apply(bootsample,2,var)}
-  return(c(estimators,varsest))
+  final<-c(estimators,varsest)
+  names(final)<-names
+  return(final)
 }
 
 
