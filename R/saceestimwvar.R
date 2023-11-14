@@ -1,12 +1,12 @@
 #' Estimation of SACE in Cluster Randomized Trials
 #'
-#' This function provides you point estimates of SACE in cluster randomized
-#' trials based on estimators derived from two sets of identification assumptions
+#' This function provides point estimates of SACE in cluster randomized
+#' trials based (CRTs) on estimators derived from two sets of identification assumptions
 #' as described in (cite paper). All principal score based models are fit using GLMM for binary data.
 #' The function also provides estimates of the variance for these estimators. User has the option
-#' to choose how the variances are estimated and corresponding confidence intervals
-#' are computed. By default, the function provides the variance of the asymptotic distribution of
-#' these estimators (cite wy), which relies on numeric approximation of integrals via Adaptive Gauss-Hermite
+#' to choose how variances are estimated and corresponding confidence intervals
+#' are constructed. By default, the function provides the variance of the asymptotic distribution of
+#' these estimators (cite wy and stefanski), which relies on numeric approximation of integrals via Adaptive Gauss-Hermite
 #' Quadrature (AGQ) (cite). The user may also select to estimate variance using non-parametric
 #' cluster bootstrap option (cite welsh).
 #' @param data Data frame containing all data required for estimation with user-specified names below.
@@ -14,9 +14,8 @@
 #' @param surv A named `character` specifying survival status, where survival through study is indicated by 1 and death by 0. Default is "S".
 #' @param out A named `character` specifying non-mortal outcome. Default is "Y".
 #' @param clustid A named `character` specifying non-mortal cluster membership. Default is "Id".
-#' @param csize A named `character` specifying cluster size. Default is "Csize".
-#' @param clustv A named `character` vector for cluster-level variables. Default is "C".
-#' @param indv A named `character` vector for individual-level varibles. Default is "X".
+#' @param indv A named `character` vector for covariates to be treated as fixed effects. Group-level variables can be included but they must be defined
+#' for each individual in the group. Default is "X".
 #' @param set1 A `logical` argument for whether identified estimator uses Set 1 Assumptions. Default is `T`.
 #' @param set2 A `logical` argument for whether identified estimator uses Set 2 Assumptions. Default is `F`.
 #' If `set2=T` and `set2=T`, function will provide results for both estimators.
@@ -55,7 +54,7 @@
 
 
 #wrapper function to compute estimates for parameters and variance estimates of these estimators
-sacecluster<-function(data,trt="A",surv="S",out="Y",clustid="Id",csize="Csize",clustv="C",indv="X",set1=T,set2=F,boot=F,logform=T,
+sacecluster<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",set1=T,set2=F,boot=F,logform=T,
                       partial=T,nagq=10,iters=200){
 #functions required for analytic method numerical integration
 if(boot==F){
@@ -202,9 +201,9 @@ aghqvect<-function(f,am=0,bm=0,h=10^(-5)){
   return(val)
 }}
 
-names<-c(trt,surv,out,clustid,indv,clustv,csize)
+names<-c(trt,surv,out,clustid,indv)
 #sace point estimates
-  saceestim<-function(data,trt,surv,out,clustid,csize,clustv,indv,set1,set2){
+  saceestim<-function(data,trt,surv,out,clustid,indv,set1,set2){
     #allows for one to include cluster size as a covariate when ics=T
     #potential informative cluster size
     df1<-dplyr::select(data,any_of(names))
@@ -256,7 +255,7 @@ names<-c(trt,surv,out,clustid,indv,clustv,csize)
 
 
   #output of function
-  results<-saceestim(data,trt,surv,out,clustid,csize,clustv,indv,set1,set2)
+  results<-saceestim(data,trt,surv,out,clustid,indv,set1,set2)
 
   df<-results[[1]]
   nc<-results[[2]]
@@ -284,7 +283,7 @@ names<-c(trt,surv,out,clustid,indv,clustv,csize)
   #obtaining estimates
   estimators<-unlist(results[-c(1:7)])
 
-  newnames<-c("int","A",indv,clustv,csize)
+  newnames<-c("int","A",indv)
   #anayltic variance
   if(boot==F){
     #number of covariates, adding 1 for intercept
@@ -437,7 +436,7 @@ names<-c(trt,surv,out,clustid,indv,clustv,csize)
       dfboot<-do.call(rbind,dflist)
       names<-names(df)
       #reestimate parameters on boot data
-      resultsb<-suppressMessages(saceestim(data=dfboot,trt,surv,out,clustid,csize,clustv,indv,set1,set2))
+      resultsb<-suppressMessages(saceestim(data=dfboot,trt,surv,out,clustid,indv,set1,set2))
       #generate bootstrap estimates
       bootsample[i,]<-unlist(resultsb[-c(1:7)])
     }
@@ -460,11 +459,11 @@ names<-c(trt,surv,out,clustid,indv,clustv,csize)
 
 #sample output with times
 # startas<-Sys.time()
-# sacecluster(data=dfsim,indv=c("X1","X2"),clustv="C1",set1=T,set2=T)
+# sacecluster(data=dfsim,indv=c("X1","X2","C1"),set1=T,set2=T)
 # endas<-Sys.time()
 # endas-startas
 
 # startboot<-Sys.time()
-# sacecluster(data=dfsim,indv=c("X1","X2"),clustv="C1",set1=T,set2=T,boot=T,iters=200)
+# sacecluster(data=dfsim,indv=c("X1","X2",C1"),set1=T,set2=T,boot=T,iters=200)
 # endboot<-Sys.time()
 # endboot-startboot
