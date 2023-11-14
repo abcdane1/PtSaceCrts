@@ -9,19 +9,17 @@
 #' these estimators (cite wy), which relies on numeric approximation of integrals via Adaptive Gauss-Hermite
 #' Quadrature (AGQ) (cite). The user may also select to estimate variance using non-parametric
 #' cluster bootstrap option (cite welsh).
-#'
-#' @param df Data frame containing all data required for estimation with user-specified names below.
+#' @param data Data frame containing all data required for estimation with user-specified names below.
 #' @param trt A named `character` specifying treatment variable. Default is "A".
-#' @param surv A named `character` specifying survival status. Default is "S".
+#' @param surv A named `character` specifying survival status, where survival through study is indicated by 1 and death by 0. Default is "S".
 #' @param out A named `character` specifying non-mortal outcome. Default is "Y".
 #' @param clustid A named `character` specifying non-mortal cluster membership. Default is "Id".
-#' @param csize A named `character` specifying cluster size. Default is "Csize". This need not be specified if `ics=F`.
+#' @param csize A named `character` specifying cluster size. Default is "Csize".
 #' @param clustv A named `character` vector for cluster-level variables. Default is "C".
 #' @param indv A named `character` vector for individual-level varibles. Default is "X".
 #' @param set1 A `logical` argument for whether identified estimator uses Set 1 Assumptions. Default is `T`.
 #' @param set2 A `logical` argument for whether identified estimator uses Set 2 Assumptions. Default is `F`.
-#' If `set2=T` and `set2=T`, function will provide out for both estimators
-#' @param ics A `logical` argument for whether estimator should account for cluster size. Default is `F`.
+#' If `set2=T` and `set2=T`, function will provide results for both estimators.
 #' @param boot A `logical` argument for variance estimation. If `boot=F`, variance is estimated
 #' using the asymptotic variance of estimator. If `boot=T`, variance of estimator is
 #' computed using nonparametric bootstrap. Note, if `boot=T`, messages indicating near 0 estimated variance
@@ -57,7 +55,7 @@
 
 
 #wrapper function to compute estimates for parameters and variance estimates of these estimators
-sacecluster<-function(df,trt="A",surv="S",out="Y",clustid="Id",csize="Csize",clustv="C",indv="X",set1=T,set2=F,ics=F,boot=F,logform=T,
+sacecluster<-function(data,trt="A",surv="S",out="Y",clustid="Id",csize="Csize",clustv="C",indv="X",set1=T,set2=F,boot=F,logform=T,
                       partial=T,nagq=10,iters=200){
 #functions required for analytic method numerical integration
 if(boot==F){
@@ -204,33 +202,29 @@ aghqvect<-function(f,am=0,bm=0,h=10^(-5)){
   return(val)
 }}
 
+names<-c(trt,surv,out,clustid,indv,clustv,csize)
 #sace point estimates
-  saceestim<-function(df,trt,surv,out,clustid,csize,clustv,indv,set1,set2,ics){
+  saceestim<-function(data,trt,surv,out,clustid,csize,clustv,indv,set1,set2){
     #allows for one to include cluster size as a covariate when ics=T
     #potential informative cluster size
-    if(ics==F){
-      names<-c(trt,surv,out,clustid,indv,clustv)
-      df<-dplyr::select(df,all_of(names))}
-    if(ics==T){
-      names<-c(trt,surv,out,clustid,indv,clustv,csize)
-      df<-dplyr::select(df,all_of(names))}
+    df1<-dplyr::select(data,any_of(names))
     #number of clusters
-    nc<-length(unique(df[,4]))
+    nc<-length(unique(df1[,4]))
     #renaming columns for notation
-    colnames(df)[1:4]<-c("A","S","Y","Id")
-    labs<-c(colnames(df[,-c(2,3,4)]),"(1|Id)")
+    colnames(df1)[1:4]<-c("A","S","Y","Id")
+    labs<-c(colnames(df1[,-c(2,3,4)]),"(1|Id)")
     #glmm logistic model fit with a random intercept
-    glmmfit<-lme4::glmer(paste("S~ ", paste(labs, collapse = "+")),family="binomial",data=df)
+    glmmfit<-lme4::glmer(paste("S~ ", paste(labs, collapse = "+")),family="binomial",data=df1)
     #fixed effects coefficients
     betafix<-lme4::fixef(glmmfit)
     #variance of random intercept
     sigma2<-(as.data.frame(lme4::VarCorr(glmmfit))$sdcor[1])^2
     #adding other treatment to df
-    lasti<-ncol(df)
-    dfnew<-cbind(df[,-lasti],A=1-df$A,Aold=df$A)
+    dfnew<-cbind(df1[,-1],A=1-df1$A,Aold=df1$A)
     #estimated predicted probability under other treatment
     valst<-predict(glmmfit,newdata=dfnew,type="response")
-    dfnewv<-cbind(dfnew,pred=valst)
+    valso<-predict(glmmfit,newdata=df1,type="response")
+    dfnewv<-cbind(dfnew,pred=valst,predog=valso)
     #set1 estimator
     if(set1==T){
       exp1h<-sum(dfnewv$pred*dfnewv$Y*dfnewv$S*dfnewv$Aold)/sum(dfnewv$pred*dfnewv$S*dfnewv$Aold)
@@ -240,8 +234,6 @@ aghqvect<-function(f,am=0,bm=0,h=10^(-5)){
     #set2 estimator
     if(set2==T){
       #prediction under treatment received
-      valso<-predict(glmmfit,newdata=df,type="response")
-      dfnewv<-cbind(dfnewv,predog=valso)
       exp1j<-sum(dfnewv$pred*dfnewv$Y*dfnewv$S*dfnewv$Aold/(dfnewv$predog))/sum(dfnewv$pred*dfnewv$Aold*dfnewv$S/(dfnewv$predog))
       exp0j<-sum(dfnewv$Y*dfnewv$S*(1-dfnewv$Aold))/sum(dfnewv$S*(1-dfnewv$Aold))
       set2est<-exp1j-exp0j}
@@ -249,13 +241,13 @@ aghqvect<-function(f,am=0,bm=0,h=10^(-5)){
     #alternatives for outputs given information
     #could futher subset by what's necessary for analytic vs boot, but slows down
     if(set1==T & set2==T){
-      return(list(df,nc,valst,valso,betafix,sigma2,c(exp1h,exp0h,exp1j,exp0j),set1est,set2est))
+      return(list(df1,nc,valst,valso,betafix,sigma2,c(exp1h,exp0h,exp1j,exp0j),set1est,set2est))
     }
     if(set1==T & set2==F){
-      return(list(df,nc,valst,valso,betafix,sigma2,c(exp1h,exp0h),set1est))
+      return(list(df1,nc,valst,valso,betafix,sigma2,c(exp1h,exp0h),set1est))
     }
     if(set1==F & set2==T){
-      return(list(df,nc,valst,valso,betafix,sigma2,c(exp1j,exp0j),set2est))
+      return(list(df1,nc,valst,valso,betafix,sigma2,c(exp1j,exp0j),set2est))
     }
     if(set1==F & set2==F){
       stop("You must specify an estimator")
@@ -264,7 +256,7 @@ aghqvect<-function(f,am=0,bm=0,h=10^(-5)){
 
 
   #output of function
-  results<-saceestim(df,trt,surv,out,clustid,csize,clustv,indv,set1,set2,ics)
+  results<-saceestim(data,trt,surv,out,clustid,csize,clustv,indv,set1,set2)
 
   df<-results[[1]]
   nc<-results[[2]]
@@ -292,6 +284,7 @@ aghqvect<-function(f,am=0,bm=0,h=10^(-5)){
   #obtaining estimates
   estimators<-unlist(results[-c(1:7)])
 
+  newnames<-c("int","A",indv,clustv,csize)
   #anayltic variance
   if(boot==F){
     #number of covariates, adding 1 for intercept
@@ -310,14 +303,7 @@ aghqvect<-function(f,am=0,bm=0,h=10^(-5)){
       dfclust1<-dffullint[clust1,]
       dfint<-dfclust1
       #covariate only matrices under treatment received
-      if(ics==F){
-        newnames<-c("int","A",indv,clustv)
-        dfcov<-dplyr::select(dfclust1,all_of(newnames))
-      }
-      if(ics==T){
-        newnames<-c("int","A",indv,clustv,csize)
-        dfcov<-dplyr::select(dfclust1,all_of(newnames))
-        }
+      dfcov<-dplyr::select(dfclust1,any_of(newnames))
       dfcovop<-dfcov
       #under alternative treatment
       dfcovop$A<-1-dfcovop$A
@@ -351,7 +337,8 @@ aghqvect<-function(f,am=0,bm=0,h=10^(-5)){
       #full log form of above
       if(logform==T & partial==F){
         phi1<-apply(dfcov*dfint$S,2,sum)-ifelse(aghqvect(f4,am=nvar)!=0,exp(sign(aghqvect(f4,am=nvar))*log(abs(aghqvect(f4,am=nvar)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)
-        phi2<--nc/(2*sigma2)+1/(2*sigma2^2)*exp(sign(aghqvect(f2))*log(abs(aghqvect(f2)))-sign(aghqvect(f1))*log(abs(aghqvect(f1))))
+        phi2<--nc/(2*sigma2)+1/(2*sigma2^2)*
+          ifelse(aghqvect(f2)!=0,exp(sign(aghqvect(f2))*log(abs(aghqvect(f2)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)
         A11<-ifelse((aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar))!=0,-exp(sign(aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar))*log(abs(aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)+ifelse(aghqvect(f4,am=nvar)%*%t(aghqvect(f4,am=nvar))!=0,exp(log(aghqvect(f4,am=nvar)%*%t(aghqvect(f4,am=nvar)))-2*log(abs(aghqvect(f1)))),0)
         A12<--1/(2*sigma2^2)*(ifelse(aghqvect(f5,am=nvar)!=0,exp(sign(aghqvect(f5,am=nvar))*log(abs(aghqvect(f5,am=nvar)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)-ifelse(aghqvect(f4,am=nvar)!=0,exp(log(aghqvect(f4,am=nvar))-2*log(abs(aghqvect(f1)))+sign(aghqvect(f2))*log(abs(aghqvect(f2)))),0))
         A22<-nc/(2*sigma2^2)-1/(sigma2^3)*ifelse(aghqvect(f2)!=0,exp(sign(aghqvect(f2))*log(abs(aghqvect(f2)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)+1/(4*sigma2^4)*(ifelse(aghqvect(f3)!=0,exp(sign(aghqvect(f3))*log(aghqvect(f3))-sign(aghqvect(f1))*log(aghqvect(f1))),0)-ifelse(aghqvect(f2)!=0,exp(2*log(abs(aghqvect(f2)))-2*log(abs(aghqvect(f1)))),0))}
@@ -417,12 +404,12 @@ aghqvect<-function(f,am=0,bm=0,h=10^(-5)){
     if(set1==T & set2==F){
       Ainh<-solve(Ah)
       varsest<-t(c(rep(0,ncov+1),1,-1))%*%Ainh%*%phimath%*%t(Ainh)%*%c(rep(0,ncov+1),1,-1)
-      names<-c("EstimateSet1","VarEstSet1")}
+      finnames<-c("EstimateSet1","VarEstSet1")}
 
     if(set1==F & set2==T){
       Ainj<-solve(Aj)
       varsest<-t(c(rep(0,ncov+1),1,-1))%*%Ainj%*%phimatj%*%t(Ainj)%*%c(rep(0,ncov+1),1,-1)
-      names<-c("EstimateSet2","VarEstSet2")}
+      finnames<-c("EstimateSet2","VarEstSet2")}
 
     if(set1==T & set2==T){
       Ainh<-solve(Ah)
@@ -430,7 +417,7 @@ aghqvect<-function(f,am=0,bm=0,h=10^(-5)){
       Ainj<-solve(Aj)
       varsestj<-t(c(rep(0,ncov+1),1,-1))%*%Ainj%*%phimatj%*%t(Ainj)%*%c(rep(0,ncov+1),1,-1)
       varsest<-c(varsesth,varsestj)
-      names<-c("EstimateSet1","EstimateSet2","VarEstSet1","VarEstSet2")}
+      finnames<-c("EstimateSet1","EstimateSet2","VarEstSet1","VarEstSet2")}
   }
 
  #non parametric bootstrap
@@ -448,35 +435,36 @@ aghqvect<-function(f,am=0,bm=0,h=10^(-5)){
       }
       #boostrap data with potentially repeated clusters
       dfboot<-do.call(rbind,dflist)
+      names<-names(df)
       #reestimate parameters on boot data
-      resultsb<-suppressMessages(saceestim(df=dfboot,trt,surv,out,clustid,csize,clustv,indv,set1,set2,ics))
+      resultsb<-suppressMessages(saceestim(data=dfboot,trt,surv,out,clustid,csize,clustv,indv,set1,set2))
       #generate bootstrap estimates
       bootsample[i,]<-unlist(resultsb[-c(1:7)])
     }
     if(set1==T & set2==F){
-      names<-c("EstimateSet1","VarEstSet1")}
+      finnames<-c("EstimateSet1","VarEstSet1")}
 
     if(set1==F & set2==T){
-      names<-c("EstimateSet2","VarEstSet2")}
+      finnames<-c("EstimateSet2","VarEstSet2")}
 
     if(set1==T & set2==T){
-      names<-c("EstimateSet1","EstimateSet2","VarEstSet1","VarEstSet2")}
+      finnames<-c("EstimateSet1","EstimateSet2","VarEstSet1","VarEstSet2")}
 
   #find variance of non-parametric bootstrap distribution
   varsest<-apply(bootsample,2,var)}
   final<-c(estimators,varsest)
-  names(final)<-names
+  names(final)<-finnames
   return(final)
 }
 
 
 #sample output with times
 # startas<-Sys.time()
-# sacecluster(df=dfsim,indv=c("X1","X2"),clustv="C1",set1=T,set2=T,ics=F)
+# sacecluster(data=dfsim,indv=c("X1","X2"),clustv="C1",set1=T,set2=T)
 # endas<-Sys.time()
 # endas-startas
 
 # startboot<-Sys.time()
-# sacecluster(df=dfsim,indv=c("X1","X2"),clustv="C1",set1=T,set2=T,ics=F,boot=T,iters=200)
+# sacecluster(data=dfsim,indv=c("X1","X2"),clustv="C1",set1=T,set2=T,boot=T,iters=200)
 # endboot<-Sys.time()
 # endboot-startboot
