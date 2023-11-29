@@ -316,7 +316,7 @@ names<-c(trt,surv,out,clustid,indv)
       if(logform==F){
         #entries of meat matrix common to both estimators
         phi1<-apply(dfcov*dfint$S,2,sum)-aghqvect(f4,am=nvar)/aghqvect(f1)
-        phi2<--nc/(2*sigma2)+1/(2*sigma2^2)*aghqvect(f2)/aghqvect(f1)
+        phi2<--1/(2*sigma2)+1/(2*sigma2^2)*aghqvect(f2)/aghqvect(f1)
         #entries of outer matrix common to both estimators before inversion
         A11<--(aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar))/aghqvect(f1)+aghqvect(f4,am=nvar)%*%t(aghqvect(f4,am=nvar))/(aghqvect(f1))^2
         A12<--1/(2*sigma2^2)*(aghqvect(f5,am=nvar)/aghqvect(f1)-aghqvect(f4,am=nvar)/(aghqvect(f1))^2*aghqvect(f2))
@@ -325,7 +325,7 @@ names<-c(trt,surv,out,clustid,indv)
       #applies a partial log form the above when computation is unfeasible, recommended for cluster sizes >100
       if(logform==T & partial==T){
         phi1<-apply(dfcov*dfint$S,2,sum)-aghqvect(f4,am=nvar)/aghqvect(f1)
-        phi2<--nc/(2*sigma2)+1/(2*sigma2^2)*aghqvect(f2)/aghqvect(f1)
+        phi2<--1/(2*sigma2)+1/(2*sigma2^2)*aghqvect(f2)/aghqvect(f1)
         A11<--(aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar))/aghqvect(f1)+exp(log(aghqvect(f4,am=nvar)%*%t(aghqvect(f4,am=nvar)))-2*log(abs(aghqvect(f1))))
         A12<--1/(2*sigma2^2)*(aghqvect(f5,am=nvar)/aghqvect(f1)-
                                 exp(log(aghqvect(f4,am=nvar))-2*log(abs(aghqvect(f1)))+sign(aghqvect(f2))*log(abs(aghqvect(f2)))))
@@ -336,7 +336,7 @@ names<-c(trt,surv,out,clustid,indv)
       #full log form of above
       if(logform==T & partial==F){
         phi1<-apply(dfcov*dfint$S,2,sum)-ifelse(aghqvect(f4,am=nvar)!=0,exp(sign(aghqvect(f4,am=nvar))*log(abs(aghqvect(f4,am=nvar)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)
-        phi2<--nc/(2*sigma2)+1/(2*sigma2^2)*
+        phi2<--1/(2*sigma2)+1/(2*sigma2^2)*
           ifelse(aghqvect(f2)!=0,exp(sign(aghqvect(f2))*log(abs(aghqvect(f2)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)
         A11<-ifelse((aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar))!=0,-exp(sign(aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar))*log(abs(aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)+ifelse(aghqvect(f4,am=nvar)%*%t(aghqvect(f4,am=nvar))!=0,exp(log(aghqvect(f4,am=nvar)%*%t(aghqvect(f4,am=nvar)))-2*log(abs(aghqvect(f1)))),0)
         A12<--1/(2*sigma2^2)*(ifelse(aghqvect(f5,am=nvar)!=0,exp(sign(aghqvect(f5,am=nvar))*log(abs(aghqvect(f5,am=nvar)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)-ifelse(aghqvect(f4,am=nvar)!=0,exp(log(aghqvect(f4,am=nvar))-2*log(abs(aghqvect(f1)))+sign(aghqvect(f2))*log(abs(aghqvect(f2)))),0))
@@ -349,7 +349,7 @@ names<-c(trt,surv,out,clustid,indv)
         phi4h<-sum(dfint$Y*(1-dfint$A)*dfint$S*p1hat)-exp0h*sum((1-dfint$A)*dfint$S*p1hat)
         #outer before inversion
         A31h<-apply(dfcovop*dfint$Y*dfint$A*dfint$S*p0hat*(1-p0hat),2,sum)-exp1h*apply(dfcovop*dfint$A*dfint$S*p0hat*(1-p0hat),2,sum)
-        A41h<-apply(dfcovop*dfint$Y*(1-dfint$A)*dfint$S*p1hat*(1-p1hat),2,sum)-exp1h*apply(dfcovop*(1-dfint$A)*dfint$S*p1hat*(1-p1hat),2,sum)
+        A41h<-apply(dfcovop*dfint$Y*(1-dfint$A)*dfint$S*p1hat*(1-p1hat),2,sum)-exp0h*apply(dfcovop*(1-dfint$A)*dfint$S*p1hat*(1-p1hat),2,sum)
         A33h<-sum(dfint$A*dfint$S*p0hat)
         A44h<-sum((1-dfint$A)*dfint$S*p1hat)
 
