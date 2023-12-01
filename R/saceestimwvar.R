@@ -19,6 +19,7 @@
 #' @param set1 A `logical` argument for whether identified estimator uses Set 1 Assumptions. Default is `T`.
 #' @param set2 A `logical` argument for whether identified estimator uses Set 2 Assumptions. Default is `F`.
 #' If `set2=T` and `set2=T`, function will provide results for both estimators.
+#' @param conf A `numeric` argument in the interval (0,1) for % confidence interval. Default is `.95`.
 #' @param boot A `logical` argument for variance estimation. If `boot=F`, variance is estimated
 #' using the asymptotic variance of estimator. If `boot=T`, variance of estimator is
 #' computed using nonparametric bootstrap. Note, if `boot=T`, messages indicating near 0 estimated variance
@@ -54,7 +55,7 @@
 
 
 #wrapper function to compute estimates for parameters and variance estimates of these estimators
-sacecluster<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",set1=T,set2=F,boot=F,logform=T,
+sacecluster<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",set1=T,set2=F,conf=.95,boot=F,logform=T,
                       partial=T,nagq=10,iters=200){
 #functions required for analytic method numerical integration
 if(boot==F){
@@ -399,28 +400,41 @@ names<-c(trt,surv,out,clustid,indv)
         Aj<-Aij+Aj}
       }
 
-    #determining which category of output, decided by what type of estimator chosen
+    alpha2<-(1-conf)/2
+    zl<-qnorm(alpha2)
+    zu<--zl
     if(set1==T & set2==F){
       Ainh<-solve(Ah)
       varsest<-t(c(rep(0,ncov+1),1,-1))%*%Ainh%*%phimath%*%t(Ainh)%*%c(rep(0,ncov+1),1,-1)
-      finnames<-c("EstimateSet1","VarEstSet1")}
+      lb<-estimators+zl*sqrt(as.numeric(varsest))
+      ub<-estimators+zu*sqrt(as.numeric(varsest))
+      bounds<-c(lb,ub)
+      finnames<-c("EstimateSet1","VarEstSet1","LBS1","UBS1")}
 
     if(set1==F & set2==T){
       Ainj<-solve(Aj)
       varsest<-t(c(rep(0,ncov+1),1,-1))%*%Ainj%*%phimatj%*%t(Ainj)%*%c(rep(0,ncov+1),1,-1)
-      finnames<-c("EstimateSet2","VarEstSet2")}
+      lb<-estimators+zl*sqrt(as.numeric(varsest))
+      ub<-estimators+zu*sqrt(as.numeric(varsest))
+      bounds<-c(lb,ub)
+      finnames<-c("EstimateSet2","VarEstSet2","LBS2","UBS2")}
 
     if(set1==T & set2==T){
       Ainh<-solve(Ah)
       varsesth<-t(c(rep(0,ncov+1),1,-1))%*%Ainh%*%phimath%*%t(Ainh)%*%c(rep(0,ncov+1),1,-1)
+      lb1<-estimators[1]+zl*sqrt(as.numeric(varsesth))
+      ub1<-estimators[1]+zu*sqrt(as.numeric(varsesth))
       Ainj<-solve(Aj)
       varsestj<-t(c(rep(0,ncov+1),1,-1))%*%Ainj%*%phimatj%*%t(Ainj)%*%c(rep(0,ncov+1),1,-1)
+      lb2<-estimators[2]+zl*sqrt(as.numeric(varsestj))
+      ub2<-estimators[2]+zu*sqrt(as.numeric(varsestj))
       varsest<-c(varsesth,varsestj)
-      finnames<-c("EstimateSet1","EstimateSet2","VarEstSet1","VarEstSet2")}
+      bounds<-c(lb1,ub1,lb2,ub2)
+      finnames<-c("EstimateSet1","EstimateSet2","VarEstSet1","VarEstSet2","LBS1","UBS1","LBS2","UBS2")}
   }
 
- #non parametric bootstrap
- if(boot==T){
+  #non parametric bootstrap
+  if(boot==T){
     #number of types of estimators specified
     colboot<-sum(c(set1,set2))
     #empty boot matrix by number of bootstrap iterations
@@ -434,28 +448,32 @@ names<-c(trt,surv,out,clustid,indv)
       }
       #boostrap data with potentially repeated clusters
       dfboot<-do.call(rbind,dflist)
-      names<-names(df)
+      #names<-names(df) #why do i need?
       #reestimate parameters on boot data
       resultsb<-suppressMessages(saceestim(data=dfboot,trt,surv,out,clustid,indv,set1,set2))
       #generate bootstrap estimates
       bootsample[i,]<-unlist(resultsb[-c(1:7)])
     }
     if(set1==T & set2==F){
-      finnames<-c("EstimateSet1","VarEstSet1")}
+      finnames<-c("EstimateSet1","VarEstSet1","LBS1","UBS1")}
 
     if(set1==F & set2==T){
-      finnames<-c("EstimateSet2","VarEstSet2")}
+      finnames<-c("EstimateSet2","VarEstSet2","LBS2","UBS2")}
 
     if(set1==T & set2==T){
-      finnames<-c("EstimateSet1","EstimateSet2","VarEstSet1","VarEstSet2")}
+      finnames<-c("EstimateSet1","EstimateSet2","VarEstSet1","VarEstSet2","LBS1","UBS1","LBS2","UBS2")}
 
-  #find variance of non-parametric bootstrap distribution
-  varsest<-apply(bootsample,2,var)}
-  final<-c(estimators,varsest)
+    #find variance of non-parametric bootstrap distribution
+    varsest<-apply(bootsample,2,var)
+    alpha2<-(1-conf)/2
+    percl<-alpha2
+    percu<-1-alpha2
+    bounds<-apply(bootsample, 2, quantile, probs = c(percl,percu))}
+
+  final<-c(estimators,varsest,bounds)
   names(final)<-finnames
   return(final)
 }
-
 
 #sample output with times
 # startas<-Sys.time()
