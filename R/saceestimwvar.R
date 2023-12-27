@@ -53,6 +53,7 @@
 #'
 #' @export
 
+#add to verify
 
 #wrapper function to compute estimates for parameters and variance estimates of these estimators
 sacecluster<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",set1=T,set2=F,conf=.95,boot=F,logform=T,
