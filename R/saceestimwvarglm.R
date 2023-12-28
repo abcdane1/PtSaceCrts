@@ -1,11 +1,31 @@
-#' Short summary of the function
+#' Estimation of SACE with Sandwich Variance
 #'
-#' Description of the function
+#' This function provides point estimates of SACE based on estimators derived from two
+#' sets of identification assumptions as described in (cite hayden, ding/lu, jiang, own, papers).
+#' All survival models are fit using GLM for binary data.
+#' The function also provides estimates of the variance for these estimators. User has the option
+#' to choose how variances are estimated and corresponding confidence intervals
+#' are constructed. By default, the function provides the variance of the asymptotic distribution of
+#' these estimators (cite wy and stefanski) that is cluster-robust in accordance with a GEE model with
+#' a working correlation matrix for independence.
 #'
-#' @param param_name1 description of parameter/input 1
-#' @param param_name1 description of parameter/input 1
+#' @param data Data frame containing all data required for estimation with user-specified names below.
+#' @param trt A named `character` specifying treatment variable. Default is "A".
+#' @param surv A named `character` specifying survival status, where survival through study is indicated by 1 and death by 0. Default is "S".
+#' @param out A named `character` specifying non-mortal outcome. Default is "Y".
+#' @param clustid A named `character` specifying non-mortal cluster membership. Default is "Id".
+#' @param indv A named `character` vector for covariates to be treated as fixed effects. Group-level variables can be included but they must be defined
+#' for each individual in the group. Default is "X".
+#' @param crobust A `logical` specifying whether cluster-robust variance estimate is provided (submatrix equal to `vcov(gee`). If set to `F`, the clustering structure is completely ignored
+#' in the sandwich variance expression (submatrix equal to `sandwich(glm())`). Default is `T`.
+#' @param set1 A `logical` argument for whether identified estimator uses Set 1 Assumptions. Default is `T`.
+#' @param set2 A `logical` argument for whether identified estimator uses Set 2 Assumptions. Default is `F`.
+#' If `set2=T` and `set2=T`, function will provide results for both estimators.
+#' @param conf A `numeric` argument in the interval (0,1) for % confidence interval. Default is `.95`.
+#' @param boot A `logical` argument for variance estimation. If `boot=F`, variance is estimated
+#' @param iters A `double` for number of bootstrap samples to be taken when `boot=T`. Default is `iters=200`. This argument is ignored when `boot=F`.
 #'
-#' @return description of what is returned
+#' @return A named `double` including point estimates, estimates of variance, and confidence intervals.
 #'
 #'
 #' @export
@@ -331,5 +351,5 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
   final<-c(estimators,varsest,bounds)
   names(final)<-finnames
   #final<-list(Ainj,phimatnoj)
-  return(c(final,RE=0))
+  return(final)
 }
