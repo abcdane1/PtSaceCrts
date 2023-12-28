@@ -16,8 +16,8 @@
 #' @param clustid A named `character` specifying non-mortal cluster membership. Default is "Id".
 #' @param indv A named `character` vector for covariates to be treated as fixed effects. Group-level variables can be included but they must be defined
 #' for each individual in the group. Default is "X".
-#' @param crobust A `logical` specifying whether cluster-robust variance estimate is provided (submatrix equal to `vcov(gee`). If set to `F`, the clustering structure is completely ignored
-#' in the sandwich variance expression (submatrix equal to `sandwich(glm())`). Default is `T`.
+#' @param crobust A `logical` specifying whether cluster-robust variance estimate is provided (1,1 submatrix equal to `vcov(geepack::geeglm(formula,family="binomial))`).
+#' If set to `F`, the clustering structure is completely ignored in the sandwich variance expression (1,1 submatrix equal to `sandwich(glm(formula,family="binomial"))`). Default is `T`.
 #' @param set1 A `logical` argument for whether identified estimator uses Set 1 Assumptions. Default is `T`.
 #' @param set2 A `logical` argument for whether identified estimator uses Set 2 Assumptions. Default is `F`.
 #' If `set2=T` and `set2=T`, function will provide results for both estimators.
@@ -310,7 +310,7 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
       for(i in 1:iters){
         bootind<-sample(1:nrow(df),replace=T)
         #necessary matrix values for estimation
-        dfboot<-dfsim[bootind,]
+        dfboot<-df[bootind,]
         resultsb<-suppressMessages(saceestimglm(data=dfboot,trt,surv,out,clustid,indv,set1,set2))
         bootsample[i,]<-unlist(resultsb[-c(1:6)])
       }}
@@ -324,7 +324,7 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
         }
         #boostrap data with potentially repeated clusters
         dfboot<-do.call(rbind,dflist)
-        #names<-names(df) #why do i need?
+        names<-names(df)
         #reestimate parameters on boot data
         resultsb<-suppressMessages(saceestimglm(data=dfboot,trt,surv,out,clustid,indv,set1,set2))
         #generate bootstrap estimates
