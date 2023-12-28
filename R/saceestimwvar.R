@@ -2,7 +2,8 @@
 #'
 #' This function provides point estimates of SACE in cluster randomized
 #' trials based (CRTs) on estimators derived from two sets of identification assumptions
-#' as described in (cite paper). All principal score based models are fit using GLMM for binary data.
+#' as described in (cite paper). All survival models are fit using GLMM with a random intercept for binary data, unless the variance
+#' of the random intercept term is estimated to be 0.
 #' The function also provides estimates of the variance for these estimators. User has the option
 #' to choose how variances are estimated and corresponding confidence intervals
 #' are constructed. By default, the function provides the variance of the asymptotic distribution of
@@ -35,8 +36,9 @@
 #' to use in excess of 20 quadrature points. This argument is ignored when `boot=T`.
 #' @param iters A `double` for number of bootstrap samples to be taken when `boot=T`. Default is `iters=200`. This argument is ignored when `boot=F`.
 #'
-#' @return A named `double` including point estimates, estimates of variance, and confidence intervals.
-#' To add: CI with names
+#' @return A named `double` including point estimates, estimates of variance, confidence intervals, and an indicator as
+#' to whether a random intercept was used (1=Yes).
+#'
 #'
 #' @importFrom dplyr select
 #' @importFrom fastGHQuad gaussHermiteData
@@ -291,7 +293,7 @@ names<-c(trt,surv,out,clustid,indv)
         final<-PtSaceCrts::saceglm(data,trt,surv,out,clustid,indv,crobust=T,set1,set2,conf,boot,iters)
         #varsest<-rep(NA,sum(c(set1,set2)))
         #final<-c(estimators,varsest,rep(varsest*2))
-        return(c(final))
+        return(c(final,RE=0))
         stop()
       }else{
     #number of covariates, adding 1 for intercept
@@ -446,7 +448,7 @@ names<-c(trt,surv,out,clustid,indv)
       final<-PtSaceCrts::saceglm(data,trt,surv,out,clustid,indv,crobust=T,set1,set2,conf,boot,iters)
       #varsest<-rep(NA,sum(c(set1,set2)))
       #final<-c(estimators,varsest,rep(varsest*2))
-      return(c(final))
+      return(c(final,RE=0))
       stop()
     }else{
     #number of types of estimators specified
