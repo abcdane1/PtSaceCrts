@@ -464,7 +464,7 @@ names<-c(trt,surv,out,clustid,indv)
       }
       #boostrap data with potentially repeated clusters
       dfboot<-do.call(rbind,dflist)
-      #names<-names(df) #why do i need?
+      names<-names(df)
       #reestimate parameters on boot data
       resultsb<-suppressMessages(saceestim(data=dfboot,trt,surv,out,clustid,indv,set1,set2))
       #generate bootstrap estimates
