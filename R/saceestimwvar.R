@@ -53,8 +53,6 @@
 #'
 #' @export
 
-#add to verify
-
 #wrapper function to compute estimates for parameters and variance estimates of these estimators
 sacecluster<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",set1=T,set2=F,conf=.95,boot=F,logform=T,
                       partial=T,nagq=10,iters=200){
@@ -215,7 +213,7 @@ names<-c(trt,surv,out,clustid,indv)
     colnames(df1)[1:4]<-c("A","S","Y","Id")
     labs<-c(colnames(df1[,-c(2,3,4)]),"(1|Id)")
     #glmm logistic model fit with a random intercept
-    glmmfit<-lme4::glmer(paste("S~ ", paste(labs, collapse = "+")),family="binomial",data=df1)
+    glmmfit<-suppressMessages(lme4::glmer(paste("S~ ", paste(labs, collapse = "+")),family="binomial",data=df1))
     #fixed effects coefficients
     betafix<-lme4::fixef(glmmfit)
     #variance of random intercept
@@ -286,8 +284,16 @@ names<-c(trt,surv,out,clustid,indv)
   estimators<-unlist(results[-c(1:7)])
 
   newnames<-c("int","A",indv)
-  #anayltic variance
+  #analytic variance
   if(boot==F){
+      #add to real function but give a different warning
+      if(sigma2<5*10^(-4)){
+        final<-PtSaceCrts::saceglm(data,trt,surv,out,clustid,indv,crobust=T,set1,set2,conf,boot,iters)
+        #varsest<-rep(NA,sum(c(set1,set2)))
+        #final<-c(estimators,varsest,rep(varsest*2))
+        return(c(final))
+        stop()
+      }else{
     #number of covariates, adding 1 for intercept
     ncov<-ncol(df[,-c(2,3,4)])+1
     #empty m-estimator inner matrix, h=set1, j=set2
@@ -322,7 +328,7 @@ names<-c(trt,surv,out,clustid,indv)
         #entries of outer matrix common to both estimators before inversion
         A11<--(aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar))/aghqvect(f1)+aghqvect(f4,am=nvar)%*%t(aghqvect(f4,am=nvar))/(aghqvect(f1))^2
         A12<--1/(2*sigma2^2)*(aghqvect(f5,am=nvar)/aghqvect(f1)-aghqvect(f4,am=nvar)/(aghqvect(f1))^2*aghqvect(f2))
-        A22<-nc/(2*sigma2^2)-1/(sigma2^3)*aghqvect(f2)/aghqvect(f1)+1/(4*sigma2^4)*(aghqvect(f3)/aghqvect(f1)-(aghqvect(f2))^2/(aghqvect(f1))^2)}
+        A22<-1/(2*sigma2^2)-1/(sigma2^3)*aghqvect(f2)/aghqvect(f1)+1/(4*sigma2^4)*(aghqvect(f3)/aghqvect(f1)-(aghqvect(f2))^2/(aghqvect(f1))^2)}
 
       #applies a partial log form the above when computation is unfeasible, recommended for cluster sizes >100
       if(logform==T & partial==T){
@@ -332,7 +338,7 @@ names<-c(trt,surv,out,clustid,indv)
         A12<--1/(2*sigma2^2)*(aghqvect(f5,am=nvar)/aghqvect(f1)-
                                 exp(log(aghqvect(f4,am=nvar))-2*log(abs(aghqvect(f1)))+sign(aghqvect(f2))*log(abs(aghqvect(f2)))))
 
-        A22<-nc/(2*sigma2^2)-1/(sigma2^3)*aghqvect(f2)/aghqvect(f1)+1/(4*sigma2^4)*(aghqvect(f3)/aghqvect(f1)-exp(2*log(abs(aghqvect(f2)))-2*log(abs(aghqvect(f1)))))
+        A22<-1/(2*sigma2^2)-1/(sigma2^3)*aghqvect(f2)/aghqvect(f1)+1/(4*sigma2^4)*(aghqvect(f3)/aghqvect(f1)-exp(2*log(abs(aghqvect(f2)))-2*log(abs(aghqvect(f1)))))
       }
 
       #full log form of above
@@ -342,7 +348,7 @@ names<-c(trt,surv,out,clustid,indv)
           ifelse(aghqvect(f2)!=0,exp(sign(aghqvect(f2))*log(abs(aghqvect(f2)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)
         A11<-ifelse((aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar))!=0,-exp(sign(aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar))*log(abs(aghqvect(f6,am=nvar,bm=nvar)+aghqvect(f7,am=nvar,bm=nvar)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)+ifelse(aghqvect(f4,am=nvar)%*%t(aghqvect(f4,am=nvar))!=0,exp(log(aghqvect(f4,am=nvar)%*%t(aghqvect(f4,am=nvar)))-2*log(abs(aghqvect(f1)))),0)
         A12<--1/(2*sigma2^2)*(ifelse(aghqvect(f5,am=nvar)!=0,exp(sign(aghqvect(f5,am=nvar))*log(abs(aghqvect(f5,am=nvar)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)-ifelse(aghqvect(f4,am=nvar)!=0,exp(log(aghqvect(f4,am=nvar))-2*log(abs(aghqvect(f1)))+sign(aghqvect(f2))*log(abs(aghqvect(f2)))),0))
-        A22<-nc/(2*sigma2^2)-1/(sigma2^3)*ifelse(aghqvect(f2)!=0,exp(sign(aghqvect(f2))*log(abs(aghqvect(f2)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)+1/(4*sigma2^4)*(ifelse(aghqvect(f3)!=0,exp(sign(aghqvect(f3))*log(aghqvect(f3))-sign(aghqvect(f1))*log(aghqvect(f1))),0)-ifelse(aghqvect(f2)!=0,exp(2*log(abs(aghqvect(f2)))-2*log(abs(aghqvect(f1)))),0))}
+        A22<-1/(2*sigma2^2)-1/(sigma2^3)*ifelse(aghqvect(f2)!=0,exp(sign(aghqvect(f2))*log(abs(aghqvect(f2)))-sign(aghqvect(f1))*log(abs(aghqvect(f1)))),0)+1/(4*sigma2^4)*(ifelse(aghqvect(f3)!=0,exp(sign(aghqvect(f3))*log(aghqvect(f3))-sign(aghqvect(f1))*log(aghqvect(f1))),0)-ifelse(aghqvect(f2)!=0,exp(2*log(abs(aghqvect(f2)))-2*log(abs(aghqvect(f1)))),0))}
 
       #set1 only entries to matrices
       if(set1==T){
@@ -399,8 +405,8 @@ names<-c(trt,surv,out,clustid,indv)
         Aij[ncov+3,ncov+3]<-A44j
 
         Aj<-Aij+Aj}
+    }
       }
-
     alpha2<-(1-conf)/2
     zl<-qnorm(alpha2)
     zu<--zl
@@ -436,6 +442,13 @@ names<-c(trt,surv,out,clustid,indv)
 
   #non parametric bootstrap
   if(boot==T){
+    if(sigma2<5*10^(-4)){
+      final<-PtSaceCrts::saceglm(data,trt,surv,out,clustid,indv,crobust=T,set1,set2,conf,boot,iters)
+      #varsest<-rep(NA,sum(c(set1,set2)))
+      #final<-c(estimators,varsest,rep(varsest*2))
+      return(c(final))
+      stop()
+    }else{
     #number of types of estimators specified
     colboot<-sum(c(set1,set2))
     #empty boot matrix by number of bootstrap iterations
@@ -454,7 +467,7 @@ names<-c(trt,surv,out,clustid,indv)
       resultsb<-suppressMessages(saceestim(data=dfboot,trt,surv,out,clustid,indv,set1,set2))
       #generate bootstrap estimates
       bootsample[i,]<-unlist(resultsb[-c(1:7)])
-    }
+    }}
     if(set1==T & set2==F){
       finnames<-c("EstimateSet1","VarEstSet1","LBS1","UBS1")}
 
@@ -473,7 +486,7 @@ names<-c(trt,surv,out,clustid,indv)
 
   final<-c(estimators,varsest,bounds)
   names(final)<-finnames
-  return(final)
+  return(c(final,RE=1))
 }
 
 #sample output with times
