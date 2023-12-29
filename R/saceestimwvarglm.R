@@ -173,8 +173,7 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
         if(set2==T){
           phi2noij<-Yi*Ai*Si*valstnoi/valsonoi-exp1j*Ai*Si*valstnoi/valsonoi
           phi3noij<-Yi*(1-Ai)*Si-exp0j*(1-Ai)*Si
-          A21noij<-dfcovfullopi*Yi*Ai*Si*valstnoi*(1-valstnoi)/valsonoi-dfcovfulli*Yi*Ai*Si*valstnoi*(1-valsonoi)/valsonoi
-          -exp1j*dfcovfullopi*Ai*Si*valstnoi*(1-valstnoi)/valsonoi-dfcovfulli*Ai*Si*valstnoi*(1-valsonoi)/valsonoi
+          A21noij<-dfcovfullopi*Yi*Ai*Si*valstnoi*(1-valstnoi)/valsonoi-dfcovfulli*Yi*Ai*Si*valstnoi*(1-valsonoi)/valsonoi-exp1j*(dfcovfullopi*Ai*Si*valstnoi*(1-valstnoi)/valsonoi-dfcovfulli*Ai*Si*valstnoi*(1-valsonoi)/valsonoi)
           A31noij<-rep(0,ncov)
           A22noij<-Ai*Si*valstnoi/valsonoi
           A33noij<-(1-Ai)*Si
@@ -311,6 +310,7 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
         bootind<-sample(1:nrow(df),replace=T)
         #necessary matrix values for estimation
         dfboot<-df[bootind,]
+        names<-names(df)
         resultsb<-suppressMessages(saceestimglm(data=dfboot,trt,surv,out,clustid,indv,set1,set2))
         bootsample[i,]<-unlist(resultsb[-c(1:6)])
       }}
