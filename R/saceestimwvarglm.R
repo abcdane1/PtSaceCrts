@@ -23,6 +23,7 @@
 #' If `set2=T` and `set2=T`, function will provide results for both estimators.
 #' @param conf A `numeric` argument in the interval (0,1) for % confidence interval. Default is `.95`.
 #' @param boot A `logical` argument for variance estimation. If `boot=F`, variance is estimated
+#' @param dfc A `logical` argument for a degrees of freedom adjustment to variance if `boot=F`. Default is `F`.
 #' @param iters A `double` for number of bootstrap samples to be taken when `boot=T`. Default is `iters=200`. This argument is ignored when `boot=F`.
 #'
 #' @return A named `double` including point estimates, estimates of variance, and confidence intervals.
@@ -32,7 +33,7 @@
 
 
 #sace glm
-saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,set1=T,set2=T,conf=.95,boot=F,iters=200){
+saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,set1=T,set2=T,conf=.95,boot=F,dfc=F,iters=200){
   names<-c(trt,surv,out,clustid,indv)
   #sace estimators
   saceestimglm<-function(data,trt,surv,out,clustid,indv,set1,set2){
@@ -273,6 +274,9 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
     if(set1==T & set2==F){
       Ainh<-solve(Anoh)
       varsest<-t(c(rep(0,ncov),1,-1))%*%Ainh%*%phimatnoh%*%t(Ainh)%*%c(rep(0,ncov),1,-1)
+      if(dfc==T){
+        varsest<-nc/(nc-nrow(Anoh))*varsest
+      }
       lb<-estimators+zl*sqrt(as.numeric(varsest))
       ub<-estimators+zu*sqrt(as.numeric(varsest))
       bounds<-c(lb,ub)
@@ -281,6 +285,9 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
     if(set1==F & set2==T){
       Ainj<-solve(Anoj)
       varsest<-t(c(rep(0,ncov),1,-1))%*%Ainj%*%phimatnoj%*%t(Ainj)%*%c(rep(0,ncov),1,-1)
+      if(dfc==T){
+        varsest<-nc/(nc-nrow(Anoj))*varsest
+      }
       lb<-estimators+zl*sqrt(as.numeric(varsest))
       ub<-estimators+zu*sqrt(as.numeric(varsest))
       bounds<-c(lb,ub)
@@ -289,10 +296,14 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
     if(set1==T & set2==T){
       Ainh<-solve(Anoh)
       varsesth<-t(c(rep(0,ncov),1,-1))%*%Ainh%*%phimatnoh%*%t(Ainh)%*%c(rep(0,ncov),1,-1)
-      lb1<-estimators[1]+zl*sqrt(as.numeric(varsesth))
-      ub1<-estimators[1]+zu*sqrt(as.numeric(varsesth))
       Ainj<-solve(Anoj)
       varsestj<-t(c(rep(0,ncov),1,-1))%*%Ainj%*%phimatnoj%*%t(Ainj)%*%c(rep(0,ncov),1,-1)
+      if(dfc==T){
+        varsesth<-nc/(nc-nrow(Anoh))*varsesth
+        varsestj<-nc/(nc-nrow(Anoj))*varsestj
+      }
+      lb1<-estimators[1]+zl*sqrt(as.numeric(varsesth))
+      ub1<-estimators[1]+zu*sqrt(as.numeric(varsesth))
       lb2<-estimators[2]+zl*sqrt(as.numeric(varsestj))
       ub2<-estimators[2]+zu*sqrt(as.numeric(varsestj))
       varsest<-c(varsesth,varsestj)
