@@ -25,6 +25,7 @@
 #' using the asymptotic variance of estimator. If `boot=T`, variance of estimator is
 #' computed using nonparametric bootstrap. Note, if `boot=T`, messages indicating near 0 estimated variance
 #' of random intercept are suppressed. Default is `F`.
+#' @param dfc A `logical` argument for a degrees of freedom adjustment to variance if `boot=F`. Default is `F`.
 #' @param logform A `logical` argument which applies the base e logarithm to some or all functions of numerically approximated integrals.
 #' Default is `T`. If all cluster sizes are smaller than 50, to save computation time, `logform` generally can be set to `F`. This argument is ignored when `boot=T`.
 #' @param partial A `logical` argument which selects the functions of the integrals to take the logarithm of when `boot=F`. The functions chosen
@@ -55,8 +56,9 @@
 #'
 #' @export
 
+#ADD: DF option, CONVERGENCE
 #wrapper function to compute estimates for parameters and variance estimates of these estimators
-sacecluster<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",set1=T,set2=F,conf=.95,boot=F,logform=T,
+sacecluster<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",set1=T,set2=F,conf=.95,boot=F,dfc=F,logform=T,
                       partial=T,nagq=10,iters=200){
 #functions required for analytic method numerical integration
 if(boot==F){
@@ -414,7 +416,15 @@ names<-c(trt,surv,out,clustid,indv)
     zu<--zl
     if(set1==T & set2==F){
       Ainh<-solve(Ah)
+      sam<-Ainh%*%phimath%*%t(Ainh)
+      v1max<-max(abs(sam))
+      if(v1max>=nc){
+        warning("Failure of convergence detected.")
+      }
       varsest<-t(c(rep(0,ncov+1),1,-1))%*%Ainh%*%phimath%*%t(Ainh)%*%c(rep(0,ncov+1),1,-1)
+      if(dfc==T){
+        varsest<-nc/(nc-nrow(Ah))*varsest
+      }
       lb<-estimators+zl*sqrt(as.numeric(varsest))
       ub<-estimators+zu*sqrt(as.numeric(varsest))
       bounds<-c(lb,ub)
@@ -422,7 +432,15 @@ names<-c(trt,surv,out,clustid,indv)
 
     if(set1==F & set2==T){
       Ainj<-solve(Aj)
+      sam<-Ainj%*%phimatj%*%t(Ainj)
+      v1max<-max(abs(sam))
+      if(v1max>=nc){
+        warning("Failure of convergence detected.")
+      }
       varsest<-t(c(rep(0,ncov+1),1,-1))%*%Ainj%*%phimatj%*%t(Ainj)%*%c(rep(0,ncov+1),1,-1)
+      if(dfc==T){
+        varsest<-nc/(nc-nrow(Aj))*varsest
+      }
       lb<-estimators+zl*sqrt(as.numeric(varsest))
       ub<-estimators+zu*sqrt(as.numeric(varsest))
       bounds<-c(lb,ub)
@@ -430,11 +448,20 @@ names<-c(trt,surv,out,clustid,indv)
 
     if(set1==T & set2==T){
       Ainh<-solve(Ah)
+      sam<-Ainh%*%phimath%*%t(Ainh)
+      v1max<-max(abs(sam))
+      if(v1max>=nc){
+        warning("Failure of convergence detected.")
+      }
       varsesth<-t(c(rep(0,ncov+1),1,-1))%*%Ainh%*%phimath%*%t(Ainh)%*%c(rep(0,ncov+1),1,-1)
-      lb1<-estimators[1]+zl*sqrt(as.numeric(varsesth))
-      ub1<-estimators[1]+zu*sqrt(as.numeric(varsesth))
       Ainj<-solve(Aj)
       varsestj<-t(c(rep(0,ncov+1),1,-1))%*%Ainj%*%phimatj%*%t(Ainj)%*%c(rep(0,ncov+1),1,-1)
+      if(dfc==T){
+        varsesth<-nc/(nc-nrow(Ah))*varsesth
+        varsestj<-nc/(nc-nrow(Aj))*varsestj
+      }
+      lb1<-estimators[1]+zl*sqrt(as.numeric(varsesth))
+      ub1<-estimators[1]+zu*sqrt(as.numeric(varsesth))
       lb2<-estimators[2]+zl*sqrt(as.numeric(varsestj))
       ub2<-estimators[2]+zu*sqrt(as.numeric(varsestj))
       varsest<-c(varsesth,varsestj)
