@@ -57,6 +57,7 @@
 #' @export
 
 #ADD: DF option, CONVERGENCE
+#ADD: varpen
 #wrapper function to compute estimates for parameters and variance estimates of these estimators
 sacecluster<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",set1=T,set2=F,conf=.95,boot=F,dfc=F,logform=T,
                       partial=T,nagq=10,iters=200){
@@ -290,9 +291,10 @@ names<-c(trt,surv,out,clustid,indv)
   newnames<-c("int","A",indv)
   #analytic variance
   if(boot==F){
-      #add to real function but give a different warning
+      #add to real function
       if(sigma2<5*10^(-4)){
-        final<-PtSaceCrts::saceglm(data,trt,surv,out,clustid,indv,crobust=T,set1,set2,conf,boot,iters)
+        #(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,set1=T,set2=T,conf=.95,boot=F,dfc=F,varpen=F,iters=200)
+        final<-PtSaceCrts::saceglm(data,trt,surv,out,clustid,indv,crobust=T,set1,set2,conf,boot,dfc,varpen=T,iters)
         #varsest<-rep(NA,sum(c(set1,set2)))
         #final<-c(estimators,varsest,rep(varsest*2))
         return(c(final,RE=0))
