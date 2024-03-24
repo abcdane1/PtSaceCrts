@@ -1,4 +1,4 @@
-#' Estimation of SACE in Cluster Randomized Trials
+#' Estimation of SACE in Cluster Randomized Trials Using Conditional Model for Survival Event
 #'
 #' This function provides interval estimates of the causal estimand SACE for cluster randomized
 #' trials based (CRTs) for the SSW and PSW estimators derived from identification assumptions
