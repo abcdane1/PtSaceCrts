@@ -1,15 +1,16 @@
 #' Estimation of SACE in Cluster Randomized Trials
 #'
-#' This function provides point estimates of SACE in cluster randomized
-#' trials based (CRTs) on estimators derived from two sets of identification assumptions
-#' as described in (cite paper). All survival models are fit using GLMM with a random intercept for binary data, unless the variance
-#' of the random intercept term is estimated to be 0.
-#' The function also provides estimates of the variance for these estimators. User has the option
-#' to choose how variances are estimated and corresponding confidence intervals
-#' are constructed. By default, the function provides the variance of the asymptotic distribution of
-#' these estimators (cite wy and stefanski), which relies on numeric approximation of integrals via Adaptive Gauss-Hermite
-#' Quadrature (AGQ) (cite). The user may also select to estimate variance using non-parametric
-#' cluster bootstrap option (cite welsh).
+#' This function provides interval estimates of the causal estimand SACE for cluster randomized
+#' trials based (CRTs) for the SSW and PSW estimators derived from identification assumptions
+#' as described in Isenberg et al.<sup>1</sup>, where all survival status models are fit
+#' using mixed effects logistic regression for binary data with a random intercept for cluster. User has the option
+#' to choose how variances are estimated, and corresponding confidence intervals
+#' are constructed. By default, this function provides the variance of the asymptotic distribution of
+#' these estimators using the theory of M-estimation<sup>2,</sup><sup>3</sup>. This variance estimation relies
+#' on numeric approximation of integrals via Adaptive Gauss-Hermite Quadrature (AGQ)<sup>4</sup>.
+#' Alternatively, the user may select to estimate the variance using the non-parametric cluster bootstrap option<sup>5</sup>.
+#' Note, if the variance of the random intercept term is estimated to be virtually 0, the
+#' GLM parameter estimates are used with one degree of freedom penalty<sup>6</sup>.
 #' @param data Data frame containing all data required for estimation with user-specified names below.
 #' @param trt A named `character` specifying treatment variable. Default is "A".
 #' @param surv A named `character` specifying survival status, where survival through study is indicated by 1 and death by 0. Default is "S".
@@ -19,7 +20,7 @@
 #' for each individual in the group. Default is "X".
 #' @param set1 A `logical` argument for whether identified estimator uses Set 1 Assumptions. Default is `T`.
 #' @param set2 A `logical` argument for whether identified estimator uses Set 2 Assumptions. Default is `F`.
-#' If `set2=T` and `set2=T`, function will provide results for both estimators.
+#' If `set1=T` and `set2=T`, function will provide results for both estimators.
 #' @param conf A `numeric` argument in the interval (0,1) for % confidence interval. Default is `.95`.
 #' @param boot A `logical` argument for variance estimation. If `boot=F`, variance is estimated
 #' using the asymptotic variance of estimator. If `boot=T`, variance of estimator is
@@ -31,11 +32,12 @@
 #' @param partial A `logical` argument which selects the functions of the integrals to take the logarithm of when `boot=F`. The functions chosen
 #' are ones of integrals intractably close to 0, requiring working with the log-scale. Default is `F` but is ignored if `logform` is set to `F`.
 #' If `partial` is set to `T`, all functions of numerical integrals are first computed at the log-scale.
-#' This may be required for larger cluster sizes. This argument is ignored when `boot=T`.
+#' This may be required for larger cluster sizes and is recommended if there's a failure of convergence when `partial=F`. This argument is ignored when `boot=T`.
 #' @param nagq A `double` for number of quadrature points used in the AGQ approximation of integrals
 #' involved in computing estimate of asymptotic variance. Default is `nagq=10`. It is not recommended
 #' to use in excess of 20 quadrature points. This argument is ignored when `boot=T`.
-#' @param iters A `double` for number of bootstrap samples to be taken when `boot=T`. Default is `iters=200`. This argument is ignored when `boot=F`.
+#' @param iters A `double` for number of bootstrap samples to be taken when `boot=T`. Default is `iters=200`. This argument is ignored when `boot=F`. This may be recommended with large cluster sizes
+#' when there is a convergence error or NA's produced from computing asymptotic variance.
 #'
 #' @return A named `double` including point estimates, estimates of variance, confidence intervals, and an indicator as
 #' to whether a random intercept was used (1=Yes).
@@ -48,11 +50,13 @@
 #'
 #' @references
 #' \enumerate{
-#'    \item{To add.}
-#'    \item{To add.}
-#'    \item{To add.}
-#' }
-#'
+#'    \item{Isenberg et al. 2024}
+#'    \item{Stefanski LA and Boos DD (2002) The calculus of m-estimation. The American Statistician 56(1): 29–38.}
+#'    \item{Wu M and Yucel RM (2019) Model-based inference on average causal effect in observational clustered data. Health Services and Outcomes Research Methodology 19: 36–60.}
+#'    \item{Liu Q and Pierce DA (1994) A note on gauss—hermite quadrature. Biometrika 81(3): 624–629.}
+#'    \item{Field CA and Welsh AH (2007) Bootstrapping clustered data. Journal of the Royal Statistical Society Series B: Statistical Methodology 69(3): 369–390.}
+#'    \item{Consult this vignette from (one of the) lmer package creators, Ben Bolker, for an explanation of this choice and relevant citations [GLMM FAQ](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html)}
+#'}
 #'
 #' @export
 
