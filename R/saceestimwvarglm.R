@@ -1,13 +1,13 @@
-#' Estimation of SACE with Sandwich Variance
+#' Estimation of SACE in Cluster Randomized Trials Using Marginal Model for Survival Event
 #'
-#' This function provides point estimates of SACE based on estimators derived from two
-#' sets of identification assumptions as described in (cite hayden, ding/lu, jiang, own, papers).
-#' All survival models are fit using GLM for binary data.
-#' The function also provides estimates of the variance for these estimators. User has the option
-#' to choose how variances are estimated and corresponding confidence intervals
-#' are constructed. By default, the function provides the variance of the asymptotic distribution of
-#' these estimators (cite wy and stefanski) that is cluster-robust in accordance with a GEE model with
-#' a working correlation matrix for independence.
+#' This function provides interval estimates of the causal estimand SACE for cluster randomized
+#' trials based (CRTs) for the SSW and PSW estimators derived from identification assumptions
+#' as described in Isenberg et al.<sup>1</sup>, where all survival status models are fit
+#' using logistic regression for binary data. User has the option
+#' to choose how variances are estimated, and corresponding confidence intervals are constructed.
+#' By default, this function provides the variance of the asymptotic distribution of
+#' these estimators using the theory of M-estimation<sup>2</sup>, resulting in a cluster-robust variance estimate<sup>3</sup>.
+#' Alternatively, the user may select to estimate variance using the non-parametric cluster bootstrap option<sup>4</sup>.
 #'
 #' @param data Data frame containing all data required for estimation with user-specified names below.
 #' @param trt A named `character` specifying treatment variable. Default is "A".
@@ -20,7 +20,7 @@
 #' If set to `F`, the clustering structure is completely ignored in the sandwich variance expression (1,1 submatrix equal to `sandwich(glm(formula,family="binomial"))`). Default is `T`.
 #' @param set1 A `logical` argument for whether identified estimator uses Set 1 Assumptions. Default is `T`.
 #' @param set2 A `logical` argument for whether identified estimator uses Set 2 Assumptions. Default is `F`.
-#' If `set2=T` and `set2=T`, function will provide results for both estimators.
+#' If `set1=T` and `set2=T`, function will provide results for both estimators.
 #' @param conf A `numeric` argument in the interval (0,1) for % confidence interval. Default is `.95`.
 #' @param boot A `logical` argument for variance estimation. If `boot=F`, variance is estimated
 #' @param dfc A `logical` argument for a degrees of freedom adjustment to variance if `boot=F`. Default is `F`.
@@ -29,6 +29,13 @@
 #'
 #' @return A named `double` including point estimates, estimates of variance, and confidence intervals.
 #'
+#' @references
+#' \enumerate{
+#'    \item{Isenberg et al. 2024}
+#'    \item{Stefanski LA and Boos DD (2002) The calculus of m-estimation. The American Statistician 56(1): 29–38.}
+#'    \item{Liang KY and Zeger SL (1986) Longitudinal data analysis using generalized linear models. Biometrika 73(1): 13–22.}
+#'    \item{Field CA and Welsh AH (2007) Bootstrapping clustered data. Journal of the Royal Statistical Society Series B: Statistical Methodology 69(3): 369–390.}
+#'}
 #'
 #' @export
 
