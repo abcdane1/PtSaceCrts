@@ -15,7 +15,7 @@
 #' @param trt A named `character` specifying treatment variable. Default is "A".
 #' @param surv A named `character` specifying survival status, where survival through study is indicated by 1 and death by 0. Default is "S".
 #' @param out A named `character` specifying non-mortal outcome. Default is "Y".
-#' @param clustid A named `character` specifying non-mortal cluster membership. Default is "Id".
+#' @param clustid A named `character` specifying cluster membership. Default is "Id".
 #' @param indv A named `character` vector for covariates to be treated as fixed effects. Group-level variables can be included but they must be defined
 #' for each individual in the group. Default is "X".
 #' @param set1 A `logical` argument for whether identified estimator uses Set 1 Assumptions. Default is `T`.
@@ -40,7 +40,7 @@
 #' when there is a convergence error or NA's produced from computing asymptotic variance.
 #'
 #' @return A named `double` including point estimates, estimates of variance, confidence intervals, and an indicator as
-#' to whether a random intercept was used (1=Yes).
+#' to whether a random intercept was not dropper (RE=1).
 #'
 #'
 #' @importFrom dplyr select
@@ -60,8 +60,6 @@
 #'
 #' @export
 
-#ADD: DF option, CONVERGENCE
-#ADD: varpen
 #wrapper function to compute estimates for parameters and variance estimates of these estimators
 sacecluster<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",set1=T,set2=F,conf=.95,boot=F,dfc=F,logform=T,
                       partial=T,nagq=10,iters=200){
