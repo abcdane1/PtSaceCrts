@@ -13,7 +13,7 @@
 #' @param trt A named `character` specifying treatment variable. Default is "A".
 #' @param surv A named `character` specifying survival status, where survival through study is indicated by 1 and death by 0. Default is "S".
 #' @param out A named `character` specifying non-mortal outcome. Default is "Y".
-#' @param clustid A named `character` specifying non-mortal cluster membership. Default is "Id".
+#' @param clustid A named `character` specifying cluster membership. Default is "Id".
 #' @param indv A named `character` vector for covariates to be treated as fixed effects. Group-level variables can be included but they must be defined
 #' for each individual in the group. Default is "X".
 #' @param crobust A `logical` specifying whether cluster-robust variance estimate is provided (1,1 submatrix equal to `vcov(geepack::geeglm(formula,family="binomial))`).
@@ -24,7 +24,7 @@
 #' @param conf A `numeric` argument in the interval (0,1) for % confidence interval. Default is `.95`.
 #' @param boot A `logical` argument for variance estimation. If `boot=F`, variance is estimated
 #' @param dfc A `logical` argument for a degrees of freedom adjustment to variance if `boot=F`. Default is `F`.
-#' @param varpen A `logical` argument for an extra degree of freedom penalty for accounting for estimating variance of random intercept if `boot=F`. Default is `F`.
+#' @param varpen A `logical` argument for an extra degree of freedom penalty for accounting for estimating variance of random intercept if `boot=F`. Default is `F` and should not be set to `T`.
 #' @param iters A `double` for number of bootstrap samples to be taken when `boot=T`. Default is `iters=200`. This argument is ignored when `boot=F`.
 #'
 #' @return A named `double` including point estimates, estimates of variance, and confidence intervals.
