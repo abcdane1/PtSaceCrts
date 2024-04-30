@@ -2,7 +2,7 @@
 
 #required source, must correctly set file path
 source("/home/danepi/saceglm.R")
-#adding a small sample correction 
+
 
 sacecluster<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",set1=T,set2=F,conf=.95,boot=F,logform=T,
                       partial=T,nagq=10,iters=200){
