@@ -218,6 +218,8 @@ names<-c(trt,surv,out,clustid,indv)
     nc<-length(unique(df1[,4]))
     #renaming columns for notation
     colnames(df1)[1:4]<-c("A","S","Y","Id")
+    #makes truncated values 0 (does not affect result)
+    df1$Y<-ifelse(is.na(df1$Y)==1,0,df1$Y)
     labs<-c(colnames(df1[,-c(2,3,4)]),"(1|Id)")
     #glmm logistic model fit with a random intercept
     glmmfit<-suppressMessages(lme4::glmer(paste("S~ ", paste(labs, collapse = "+")),family="binomial",data=df1))
