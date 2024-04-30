@@ -54,6 +54,8 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
     nc<-length(unique(df1[,4]))
     #renaming columns for notation
     colnames(df1)[1:4]<-c("A","S","Y","Id")
+    #makes truncated values 0 (does not affect result)
+    df1$Y<-ifelse(is.na(df1$Y)==1,0,df1$Y)
     df1$Id<-as.factor(df1$Id)
     labs<-c(colnames(df1[,-c(2,3,4)]))
     #glmm logistic model fit with a random intercept
