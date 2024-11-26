@@ -160,7 +160,7 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
 
         phi1noi<-dfcovfulli*(Si-valsonoi)
         dui<-dfcovfulli*valsonoi*(1-valsonoi)
-        A11noi<-dfcovfulli%*%t(dui)
+        A11noi<--dfcovfulli%*%t(dui)
 
         if(set1==T){
           phi2noih<-Yi*Ai*Si*valstnoi-exp1h*Ai*Si*valstnoi
@@ -235,7 +235,7 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
         Ai<-dfint$A
         Si<-dfint$S
         phi1noi<-t(t(dfcov)%*%(Si-valsonoi))
-        A11noi<-t(dfcov*valsonoi*(1-valsonoi))%*%dfcov
+        A11noi<--t(dfcov*valsonoi*(1-valsonoi))%*%dfcov
 
         if(set1==T){
           phi2noih<-sum(Yi*Ai*Si*valstnoi)-exp1h*sum(Ai*Si*valstnoi)
