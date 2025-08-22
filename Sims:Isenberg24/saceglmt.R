@@ -113,7 +113,7 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
 
       phi1noi<-dfcovfulli*(Si-valsonoi)
       dui<-dfcovfulli*valsonoi*(1-valsonoi)
-      A11noi<--dfcovfulli%*%t(dui)
+      A11noi<-dfcovfulli%*%t(dui)
 
       if(set1==T){
         phi2noih<-Yi*Ai*Si*valstnoi-exp1h*Ai*Si*valstnoi
@@ -188,7 +188,7 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
         dfcovop$A<-1-dfcovop$A
         dfcov<-as.matrix(dfcov)
         dfcovop<-as.matrix(dfcovop)
-        #estimated values under each treatment received vs alternative
+        #estimated values under each treamtent received vs alternative
         valstnoi<-valstno[clust1]
         valsonoi<-valsono[clust1]
         nvar<-ncol(dfcov)
@@ -196,7 +196,7 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
         Ai<-dfint$A
         Si<-dfint$S
         phi1noi<-t(t(dfcov)%*%(Si-valsonoi))
-        A11noi<--t(dfcov*valsonoi*(1-valsonoi))%*%dfcov
+        A11noi<-t(dfcov*valsonoi*(1-valsonoi))%*%dfcov
 
         if(set1==T){
           phi2noih<-sum(Yi*Ai*Si*valstnoi)-exp1h*sum(Ai*Si*valstnoi)
@@ -242,11 +242,11 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
         }}
 
       alpha2<-(1-conf)/2
-      zl<-qnorm(alpha2)
+      zl<-qt(alpha2,df=nc-2)
       zu<--zl
       if(set1==T & set2==F){
         Ainh<-solve(Anoh)
-        varsest<-nc/(nc-nrow(Anoh))*t(c(rep(0,ncov),1,-1))%*%Ainh%*%phimatnoh%*%t(Ainh)%*%c(rep(0,ncov),1,-1)
+        varsest<-nc/(nc-2)*t(c(rep(0,ncov),1,-1))%*%Ainh%*%phimatnoh%*%t(Ainh)%*%c(rep(0,ncov),1,-1)
         lb<-estimators+zl*sqrt(as.numeric(varsest))
         ub<-estimators+zu*sqrt(as.numeric(varsest))
         bounds<-c(lb,ub)
@@ -254,7 +254,7 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
 
       if(set1==F & set2==T){
         Ainj<-solve(Anoj)
-        varsest<-nc/(nc-nrow(Anoj))*t(c(rep(0,ncov),1,-1))%*%Ainj%*%phimatnoj%*%t(Ainj)%*%c(rep(0,ncov),1,-1)
+        varsest<-nc/(nc-2)*t(c(rep(0,ncov),1,-1))%*%Ainj%*%phimatnoj%*%t(Ainj)%*%c(rep(0,ncov),1,-1)
         lb<-estimators+zl*sqrt(as.numeric(varsest))
         ub<-estimators+zu*sqrt(as.numeric(varsest))
         bounds<-c(lb,ub)
@@ -266,12 +266,12 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
         pen<-0
         if(varpen==T){
           pen<-1}
-        varsesth<-nc/(nc-nrow(Anoh)-pen)*t(c(rep(0,ncov),1,-1))%*%Ainh%*%phimatnoh%*%t(Ainh)%*%c(rep(0,ncov),1,-1)
+        varsesth<-nc/(nc-2)*t(c(rep(0,ncov),1,-1))%*%Ainh%*%phimatnoh%*%t(Ainh)%*%c(rep(0,ncov),1,-1)
         lb1<-estimators[1]+zl*sqrt(as.numeric(varsesth))
         ub1<-estimators[1]+zu*sqrt(as.numeric(varsesth))
         Ainj<-solve(Anoj)
         #varsestj<-t(c(rep(0,ncov),1,-1))%*%Ainj%*%phimatnoj%*%t(Ainj)%*%c(rep(0,ncov),1,-1)
-        varsestj<-nc/(nc-nrow(Anoj)-pen)*t(c(rep(0,ncov),1,-1))%*%Ainj%*%phimatnoj%*%t(Ainj)%*%c(rep(0,ncov),1,-1)
+        varsestj<-nc/(nc-2)*t(c(rep(0,ncov),1,-1))%*%Ainj%*%phimatnoj%*%t(Ainj)%*%c(rep(0,ncov),1,-1)
         lb2<-estimators[2]+zl*sqrt(as.numeric(varsestj))
         ub2<-estimators[2]+zu*sqrt(as.numeric(varsestj))
         varsest<-c(varsesth,varsestj)

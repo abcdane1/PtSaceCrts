@@ -50,11 +50,11 @@
 #'
 #' @references
 #' \enumerate{
-#'    \item{Isenberg et al. 2024}
-#'    \item{Stefanski LA and Boos DD (2002) The calculus of m-estimation. The American Statistician 56(1): 29–38.}
-#'    \item{Wu M and Yucel RM (2019) Model-based inference on average causal effect in observational clustered data. Health Services and Outcomes Research Methodology 19: 36–60.}
-#'    \item{Liu Q and Pierce DA (1994) A note on gauss—hermite quadrature. Biometrika 81(3): 624–629.}
-#'    \item{Field CA and Welsh AH (2007) Bootstrapping clustered data. Journal of the Royal Statistical Society Series B: Statistical Methodology 69(3): 369–390.}
+#'    \item{Isenberg, D., Harhay, M.O., Mitra, N. and Li, F., 2025. Weighting methods for truncation by death in cluster-randomized trials. \emph{Statistical Methods in Medical Research, 34(3)}, pp.473-489.}
+#'    \item{Stefanski L.A. and Boos D.D., 2002. The calculus of M-estimation. \emph{The American Statistician, 56(1)}, pp.29–38.}
+#'    \item{Wu, M. and Yucel, R.M., 2019. Model-based inference on average causal effect in observational clustered data. \emph{Health Services and Outcomes Research Methodology, 19(1)}, pp.36-60.}
+#'    \item{Liu, Q. and Pierce, D.A., 1994. A note on Gauss—Hermite quadrature. \emph{Biometrika, 81(3)}, pp.624-629.}
+#'    \item{Field C.A. and Welsh A.H., 2007. Bootstrapping clustered data. \emph{Journal of the Royal Statistical Society Series B: Statistical Methodology, 69(3)}, pp.369–390.}
 #'    \item{Consult this vignette from (one of the) lmer package creators, Ben Bolker, for an explanation of this choice and relevant citations [GLMM FAQ](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html)}
 #'}
 #'

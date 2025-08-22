@@ -2,78 +2,93 @@
 % Please edit documentation in R/saceestimwvar.R
 \name{sacecluster}
 \alias{sacecluster}
-\title{Estimation of SACE in Cluster Randomized Trials}
+\title{Estimation of SACE in Cluster Randomized Trials Using Conditional Model for Survival Event}
 \usage{
 sacecluster(
-  df,
+  data,
   trt = "A",
   surv = "S",
   out = "Y",
   clustid = "Id",
-  csize = "Csize",
-  clustv = "C",
   indv = "X",
   set1 = T,
   set2 = F,
-  ics = F,
+  conf = 0.95,
   boot = F,
+  dfc = F,
+  logform = T,
+  partial = T,
   nagq = 10,
   iters = 200
 )
 }
 \arguments{
-\item{df}{Data frame containing all data required for estimation with names listed below.}
+\item{data}{Data frame containing all data required for estimation with user-specified names below.}
 
 \item{trt}{A named \code{character} specifying treatment variable. Default is "A".}
 
-\item{surv}{A named \code{character} specifying survival status. Default is "S".}
+\item{surv}{A named \code{character} specifying survival status, where survival through study is indicated by 1 and death by 0. Default is "S".}
 
 \item{out}{A named \code{character} specifying non-mortal outcome. Default is "Y".}
 
-\item{clustid}{A named \code{character} specifying non-mortal cluster membership. Default is "Id".}
+\item{clustid}{A named \code{character} specifying cluster membership. Default is "Id".}
 
-\item{csize}{A named \code{character} specifying cluster size. Default is "Csize". This need not be specified if \code{ics=F}.}
-
-\item{clustv}{A named \code{character} vector for cluster-level variables. Default is "C"}
-
-\item{indv}{A named \code{character} vector for individual-level varibles. Default is "X".}
+\item{indv}{A named \code{character} vector for covariates to be treated as fixed effects. Group-level variables can be included but they must be defined
+for each individual in the group. Default is "X".}
 
 \item{set1}{A \code{logical} argument for whether identified estimator uses Set 1 Assumptions. Default is \code{T}.}
 
 \item{set2}{A \code{logical} argument for whether identified estimator uses Set 2 Assumptions. Default is \code{F}.
-If \code{set2=T} and \code{set2=T}, function will provide out for both estimators}
+If \code{set1=T} and \code{set2=T}, function will provide results for both estimators.}
 
-\item{ics}{A \code{logical} argument for whether estimator should account for cluster size. Default is \code{F}.}
+\item{conf}{A \code{numeric} argument in the interval (0,1) for \% confidence interval. Default is \code{.95}.}
 
 \item{boot}{A \code{logical} argument for variance estimation. If \code{boot=F}, variance is estimated
 using the asymptotic variance of estimator. If \code{boot=T}, variance of estimator is
-computed using nonparametric boostrap. Default is \code{F}.}
+computed using nonparametric bootstrap. Note, if \code{boot=T}, messages indicating near 0 estimated variance
+of random intercept are suppressed. Default is \code{F}.}
+
+\item{dfc}{A \code{logical} argument for a degrees of freedom adjustment to variance if \code{boot=F}. Default is \code{F}.}
+
+\item{logform}{A \code{logical} argument which applies the base e logarithm to some or all functions of numerically approximated integrals.
+Default is \code{T}. If all cluster sizes are smaller than 50, to save computation time, \code{logform} generally can be set to \code{F}. This argument is ignored when \code{boot=T}.}
+
+\item{partial}{A \code{logical} argument which selects the functions of the integrals to take the logarithm of when \code{boot=F}. The functions chosen
+are ones of integrals intractably close to 0, requiring working with the log-scale. Default is \code{F} but is ignored if \code{logform} is set to \code{F}.
+If \code{partial} is set to \code{T}, all functions of numerical integrals are first computed at the log-scale.
+This may be required for larger cluster sizes and is recommended if there's a failure of convergence when \code{partial=F}. This argument is ignored when \code{boot=T}.}
 
 \item{nagq}{A \code{double} for number of quadrature points used in the AGQ approximation of integrals
 involved in computing estimate of asymptotic variance. Default is \code{nagq=10}. It is not recommended
-to use in excess of 20 quadrature points. If \code{boot=T}, this argument is unused.}
+to use in excess of 20 quadrature points. This argument is ignored when \code{boot=T}.}
 
-\item{iters}{A \code{double} for number of bootstrap samples to be taken. Default is \code{iters=200}.}
+\item{iters}{A \code{double} for number of bootstrap samples to be taken when \code{boot=T}. Default is \code{iters=200}. This argument is ignored when \code{boot=F}. This may be recommended with large cluster sizes
+when there is a convergence error or NA's produced from computing asymptotic variance.}
 }
 \value{
-A named \code{double} including point estimates, estimates of variance, and confidence intervals.
-To add: names, CIs.
+A named \code{double} including point estimates, estimates of variance, confidence intervals, and an indicator as
+to whether a random intercept was not dropper (RE=1).
 }
 \description{
-This function provides you point estimates of SACE in cluster randomized
-trials based on estimators derived from two sets of identification assumptions
-as described in (cite paper). All principal score based models are fit using GLMM for binary data.
-The function also provides estimates of the variance for these estimators. User has the option
-to choose how variance is estimated and corresponding confidence intervals
-are computed. By default, the function provides the variance of the asymptotic distribution of
-these estimators (cite wy), which relies on numeric approximation of integrals via Adaptive Gauss-Hermite
-Quadrature (AGQ) (cite). The user may also select to estimate variance using non-parametric
-cluster bootstrap option (cite welsh).
+This function provides interval estimates of the causal estimand SACE for cluster randomized
+trials based (CRTs) for the SSW and PSW estimators derived from identification assumptions
+as described in Isenberg et al.\if{html}{\out{<sup>}}1\if{html}{\out{</sup>}}, where all survival status models are fit
+using mixed effects logistic regression for binary data with a random intercept for cluster. User has the option
+to choose how variances are estimated, and corresponding confidence intervals
+are constructed. By default, this function provides the variance of the asymptotic distribution of
+these estimators using the theory of M-estimation\if{html}{\out{<sup>}}2,\if{html}{\out{</sup>}}\if{html}{\out{<sup>}}3\if{html}{\out{</sup>}}. This variance estimation relies
+on numeric approximation of integrals via Adaptive Gauss-Hermite Quadrature (AGQ)\if{html}{\out{<sup>}}4\if{html}{\out{</sup>}}.
+Alternatively, the user may select to estimate the variance using the non-parametric cluster bootstrap option\if{html}{\out{<sup>}}5\if{html}{\out{</sup>}}.
+Note, if the variance of the random intercept term is estimated to be virtually 0, the
+GLM parameter estimates are used with one degree of freedom penalty\if{html}{\out{<sup>}}6\if{html}{\out{</sup>}}.
 }
 \references{
 \enumerate{
-\item{add.}
-\item{add.}
-\item{add.}
+\item{Isenberg, D., Harhay, M.O., Mitra, N. and Li, F., 2025. Weighting methods for truncation by death in cluster-randomized trials. \emph{Statistical Methods in Medical Research, 34(3)}, pp.473-489.}
+\item{Stefanski L.A. and Boos D.D., 2002. The calculus of M-estimation. \emph{The American Statistician, 56(1)}, pp.29–38.}
+\item{Wu, M. and Yucel, R.M., 2019. Model-based inference on average causal effect in observational clustered data. \emph{Health Services and Outcomes Research Methodology, 19(1)}, pp.36-60.}
+\item{Liu, Q. and Pierce, D.A., 1994. A note on Gauss—Hermite quadrature. \emph{Biometrika, 81(3)}, pp.624-629.}
+\item{Field C.A. and Welsh A.H., 2007. Bootstrapping clustered data. \emph{Journal of the Royal Statistical Society Series B: Statistical Methodology, 69(3)}, pp.369–390.}
+\item{Consult this vignette from (one of the) lmer package creators, Ben Bolker, for an explanation of this choice and relevant citations \href{https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html}{GLMM FAQ}}
 }
 }

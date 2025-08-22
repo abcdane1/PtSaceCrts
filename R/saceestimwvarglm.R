@@ -31,10 +31,10 @@
 #'
 #' @references
 #' \enumerate{
-#'    \item{Isenberg et al. 2024}
-#'    \item{Stefanski LA and Boos DD (2002) The calculus of m-estimation. The American Statistician 56(1): 29–38.}
-#'    \item{Liang KY and Zeger SL (1986) Longitudinal data analysis using generalized linear models. Biometrika 73(1): 13–22.}
-#'    \item{Field CA and Welsh AH (2007) Bootstrapping clustered data. Journal of the Royal Statistical Society Series B: Statistical Methodology 69(3): 369–390.}
+#'    \item{Isenberg, D., Harhay, M.O., Mitra, N. and Li, F., 2025. Weighting methods for truncation by death in cluster-randomized trials. \emph{Statistical Methods in Medical Research, 34(3)}, pp.473-489.}
+#'    \item{Stefanski L.A. and Boos D.D., 2002. The calculus of M-estimation. \emph{The American Statistician, 56(1)}, pp.29–38.}
+#'    \item{Liang, K.Y. and Zeger, S.L., 1986. Longitudinal data analysis using generalized linear models. \emph{Biometrika, 73(1)}, pp.13-22.}
+#'    \item{Field C.A. and Welsh A.H., 2007. Bootstrapping clustered data. \emph{Journal of the Royal Statistical Society Series B: Statistical Methodology, 69(3)}, pp.369–390.}
 #'}
 #'
 #' @export
