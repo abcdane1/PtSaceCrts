@@ -361,7 +361,6 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
         }
         #bootstrap data with potentially repeated clusters
         dfboot<-do.call(rbind,dflist)
-        names<-names(df)
         #reestimate parameters on boot data
         resultsb<-suppressMessages(saceestimglm(data=dfboot,trt,surv,out,clustid,indv,set1,set2))
         #generate bootstrap estimates
