@@ -13,7 +13,7 @@
 #' @param trt A named `character` specifying treatment variable. Default is "A".
 #' @param surv A named `character` specifying survival status, where survival through study is indicated by 1 and death by 0. Default is "S".
 #' @param out A named `character` specifying non-mortal outcome. Default is "Y".
-#' @param clustid A named `character` specifying cluster membership. Default is "Id".
+#' @param clustid A named `character` specifying cluster membership. Default is "Id". Cluster ids should be ordered consecutively 1 to the total number of clusters.
 #' @param indv A named `character` vector for covariates to be treated as fixed effects. Group-level variables can be included but they must be defined
 #' for each individual in the group. Default is "X".
 #' @param crobust A `logical` specifying whether cluster-robust variance estimate is provided (1,1 submatrix equal to `vcov(geepack::geeglm(formula,family="binomial))`).
@@ -23,6 +23,8 @@
 #' If `set1=T` and `set2=T`, function will provide results for both estimators.
 #' @param conf A `numeric` argument in the interval (0,1) for % confidence interval. Default is `.95`.
 #' @param boot A `logical` argument for variance estimation. If `boot=F`, variance is estimated
+#' using the asymptotic variance of estimator. If `boot=T`, variance of estimator is
+#' computed using nonparametric bootstrap with corresponding interval. Default is `F`.
 #' @param dfc A `logical` argument for a degrees of freedom adjustment to variance if `boot=F`. Default is `F`.
 #' @param varpen A `logical` argument for an extra degree of freedom penalty for accounting for estimating variance of random intercept if `boot=F`. Default is `F` and should not be set to `T`.
 #' @param iters A `double` for number of bootstrap samples to be taken when `boot=T`. Default is `iters=200`. This argument is ignored when `boot=F`.
@@ -43,7 +45,7 @@
 #sace glm
 #ADD varpen
 # if(varpen==T){pen<-1}
-saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,set1=T,set2=T,conf=.95,boot=F,dfc=F,varpen=F,iters=200){
+saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,set1=T,set2=F,conf=.95,boot=F,dfc=F,varpen=F,iters=200){
   names<-c(trt,surv,out,clustid,indv)
   #sace estimators
   saceestimglm<-function(data,trt,surv,out,clustid,indv,set1,set2){

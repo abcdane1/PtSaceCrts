@@ -15,7 +15,7 @@
 #' @param trt A named `character` specifying treatment variable. Default is "A".
 #' @param surv A named `character` specifying survival status, where survival through study is indicated by 1 and death by 0. Default is "S".
 #' @param out A named `character` specifying non-mortal outcome. Default is "Y".
-#' @param clustid A named `character` specifying cluster membership. Default is "Id".
+#' @param clustid A named `character` specifying cluster membership. Default is "Id". Cluster ids should be ordered consecutively 1 to the total number of clusters.
 #' @param indv A named `character` vector for covariates to be treated as fixed effects. Group-level variables can be included but they must be defined
 #' for each individual in the group. Default is "X".
 #' @param set1 A `logical` argument for whether identified estimator uses Set 1 Assumptions. Default is `T`.
@@ -24,7 +24,7 @@
 #' @param conf A `numeric` argument in the interval (0,1) for % confidence interval. Default is `.95`.
 #' @param boot A `logical` argument for variance estimation. If `boot=F`, variance is estimated
 #' using the asymptotic variance of estimator. If `boot=T`, variance of estimator is
-#' computed using nonparametric bootstrap. Note, if `boot=T`, messages indicating near 0 estimated variance
+#' computed using nonparametric bootstrap with corresponding interval. Note, if `boot=T`, messages indicating near 0 estimated variance
 #' of random intercept are suppressed. Default is `F`.
 #' @param dfc A `logical` argument for a degrees of freedom adjustment to variance if `boot=F`. Default is `F`.
 #' @param logform A `logical` argument which applies the base e logarithm to some or all functions of numerically approximated integrals.
@@ -493,11 +493,13 @@ names<-c(trt,surv,out,clustid,indv)
       bootind<-sample(1:nc,replace=T)
       dflist<-list()
       for(j in 1:nc){
-        dflist[[j]]<-df[df$Id==bootind[j],]
+        dflistj<-df[df$Id==bootind[j],]
+        dflistj$Id<-j
+        dflist[[j]]<-dflistj
       }
-      #boostrap data with potentially repeated clusters
+      #bootstrap data with potentially repeated clusters
       dfboot<-do.call(rbind,dflist)
-      names<-names(df)
+      #names<-names(df)
       #reestimate parameters on boot data
       resultsb<-suppressMessages(saceestim(data=dfboot,trt,surv,out,clustid,indv,set1,set2))
       #generate bootstrap estimates
