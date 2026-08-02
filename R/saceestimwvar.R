@@ -316,7 +316,7 @@ names<-c(trt,surv,out,clustid,indv)
     dffullint<-data.frame(int=rep(1,nrow(df)),df)
     #for each cluster compute that terms as described in accompanying paper
     for(i in 1:nc){
-      clust1<-which(df$Id==i,)
+      clust1<-which(df$Id==i)
       dfclust1<-dffullint[clust1,]
       dfint<-dfclust1
       #covariate only matrices under treatment received
