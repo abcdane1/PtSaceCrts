@@ -359,7 +359,7 @@ saceglm<-function(data,trt="A",surv="S",out="Y",clustid="Id",indv="X",crobust=T,
         for(j in 1:nc){
           dflist[[j]]<-df[df$Id==bootind[j],]
         }
-        #boostrap data with potentially repeated clusters
+        #bootstrap data with potentially repeated clusters
         dfboot<-do.call(rbind,dflist)
         names<-names(df)
         #reestimate parameters on boot data
