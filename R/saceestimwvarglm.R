@@ -13,7 +13,7 @@
 #' @param trt A named `character` specifying treatment variable. Default is "A".
 #' @param surv A named `character` specifying survival status, where survival through study is indicated by 1 and death by 0. Default is "S".
 #' @param out A named `character` specifying non-mortal outcome. Default is "Y".
-#' @param clustid A named `character` specifying cluster membership. Default is "Id". Cluster ids should be ordered consecutively 1 to the total number of clusters.
+#' @param clustid A named `character` specifying cluster membership. Default is "Id". Cluster IDs should be numbered consecutively 1 to the total number of clusters.
 #' @param indv A named `character` vector for covariates to be treated as fixed effects. Group-level variables can be included but they must be defined
 #' for each individual in the group. Default is "X".
 #' @param crobust A `logical` specifying whether cluster-robust variance estimate is provided (1,1 submatrix equal to `vcov(geepack::geeglm(formula,family="binomial))`).
